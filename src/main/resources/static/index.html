@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benleung 博客</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo"><a href="index.html">Benleung 博客</a></div>
+      <nav class="nav" id="nav"></nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="blog-list" id="blog-list">
+      <div class="empty">加载中...</div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    function renderBlogs(list) {
+      const box = document.getElementById('blog-list');
+      if (!list || list.length === 0) {
+        box.innerHTML = '<div class="empty">暂无文章</div>';
+        return;
+      }
+      box.innerHTML = list.map(b => `
+        <div class="blog-card" onclick="location.href='article.html?id=${b.id}'">
+          <div class="title">${escapeHtml(b.title)}</div>
+          ${b.description ? `<div class="desc">${escapeHtml(b.description)}</div>` : ''}
+          <div class="meta">
+            ${b.type ? `<span class="tag">${escapeHtml(b.type)}</span>` : ''}
+            <span>${formatTime(b.createTime)}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    (async function init() {
+      renderNav();
+      try {
+        renderBlogs(await API.getBlogList());
+      } catch (e) {
+        document.getElementById('blog-list').innerHTML =
+          '<div class="empty">加载失败：' + escapeHtml(e.message || '网络错误') + '</div>';
+      }
+    })();
+  </script>
+</body>
+</html>

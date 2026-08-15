@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理面板 - Benleung 博客</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo"><a href="index.html">Benleung 博客</a></div>
+      <nav class="nav">
+        <a class="btn btn-ghost" href="index.html">查看博客</a>
+        <button class="btn btn-ghost" onclick="logout()">退出登录</button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="admin-toolbar">
+      <h2>文章管理</h2>
+      <button class="btn btn-primary" onclick="openModal()">新增文章</button>
+    </div>
+
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>ID</th><th>标题</th><th>类型</th><th>状态</th><th>更新时间</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="blog-rows">
+        <tr><td colspan="6" class="empty">加载中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 新增/编辑弹窗 -->
+  <div class="modal-mask" id="modal">
+    <div class="modal">
+      <div class="modal-title" id="modal-title">新增文章</div>
+      <form onsubmit="return saveBlog(event)">
+        <input type="hidden" id="f-id">
+        <div class="form-group">
+          <label>标题</label>
+          <input id="f-title" type="text" placeholder="文章标题">
+        </div>
+        <div class="form-group">
+          <label>类型</label>
+          <input id="f-type" type="text" placeholder="如：Java / 前端 / 随笔">
+        </div>
+        <div class="form-group">
+          <label>描述（列表页摘要）</label>
+          <input id="f-desc" type="text" placeholder="一句话描述">
+        </div>
+        <div class="form-group">
+          <label>发布状态</label>
+          <select id="f-published">
+            <option value="1">已发布</option>
+            <option value="0">草稿</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>正文</label>
+          <textarea id="f-content" placeholder="文章正文"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal()">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    // 守卫：仅管理员可进入
+    if (!getToken() || getRole() !== 1) {
+      location.href = 'login.html';
+    }
+
+    async function loadList() {
+      const tbody = document.getElementById('blog-rows');
+      try {
+        const list = await API.getBlogList();
+        if (!list || list.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty">暂无文章</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list.map(b => `
+          <tr>
+            <td>${b.id}</td>
+            <td>${escapeHtml(b.title)}</td>
+            <td>${b.type ? escapeHtml(b.type) : '-'}</td>
+            <td>${b.published === 1 ? '<span class="badge">已发布</span>' : '<span class="badge badge-draft">草稿</span>'}</td>
+            <td>${formatTime(b.updateTime)}</td>
+            <td>
+              <button class="btn btn-outline" onclick="editBlog(${b.id})">编辑</button>
+              <button class="btn btn-danger" onclick="removeBlog(${b.id})">删除</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        handleError(e);
+      }
+    }
+
+    function openModal() {
+      document.getElementById('modal-title').textContent = '新增文章';
+      document.getElementById('f-id').value = '';
+      document.getElementById('f-title').value = '';
+      document.getElementById('f-type').value = '';
+      document.getElementById('f-desc').value = '';
+      document.getElementById('f-published').value = '1';
+      document.getElementById('f-content').value = '';
+      document.getElementById('modal').classList.add('show');
+    }
+
+    async function editBlog(id) {
+      try {
+        const a = await API.getBlogById(id);
+        document.getElementById('modal-title').textContent = '编辑文章';
+        document.getElementById('f-id').value = a.id;
+        document.getElementById('f-title').value = a.title || '';
+        document.getElementById('f-type').value = a.type || '';
+        document.getElementById('f-desc').value = a.description || '';
+        document.getElementById('f-published').value = a.published === 0 ? '0' : '1';
+        document.getElementById('f-content').value = a.content || '';
+        document.getElementById('modal').classList.add('show');
+      } catch (e) {
+        handleError(e);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('show');
+    }
+
+    async function saveBlog(e) {
+      e.preventDefault();
+      const payload = {
+        title: document.getElementById('f-title').value.trim(),
+        type: document.getElementById('f-type').value.trim(),
+        description: document.getElementById('f-desc').value.trim(),
+        published: Number(document.getElementById('f-published').value),
+        content: document.getElementById('f-content').value,
+      };
+      if (!payload.title || !payload.content) { toast('标题和正文不能为空'); return; }
+      const id = document.getElementById('f-id').value;
+      try {
+        if (id) {
+          await API.updateBlog(id, payload);
+          toast('修改成功');
+        } else {
+          await API.addBlog(payload);
+          toast('新增成功');
+        }
+        closeModal();
+        loadList();
+      } catch (err) {
+        handleError(err);
+      }
+    }
+
+    async function removeBlog(id) {
+      if (!confirm('确定删除这篇文章吗？')) return;
+      try {
+        await API.deleteBlog(id);
+        toast('删除成功');
+        loadList();
+      } catch (e) {
+        handleError(e);
+      }
+    }
+
+    loadList();
+  </script>
+</body>
+</html>

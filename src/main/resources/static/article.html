@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文章 - Benleung 博客</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo"><a href="index.html">Benleung 博客</a></div>
+      <nav class="nav" id="nav"></nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <a class="back-link btn btn-outline" href="index.html">&larr; 返回列表</a>
+    <div class="article" id="article-box">
+      <div class="empty">加载中...</div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    const id = new URLSearchParams(location.search).get('id');
+
+    async function init() {
+      renderNav();
+      const box = document.getElementById('article-box');
+      if (!id) {
+        box.innerHTML = '<div class="empty">缺少文章 id</div>';
+        return;
+      }
+      try {
+        const a = await API.getBlogById(id);
+        box.innerHTML = `
+          <div class="title">${escapeHtml(a.title)}</div>
+          <div class="meta">
+            ${a.type ? `<span class="tag">${escapeHtml(a.type)}</span>` : ''}
+            <span>创建：${formatTime(a.createTime)}</span>
+            <span>更新：${formatTime(a.updateTime)}</span>
+          </div>
+          <div class="content">${escapeHtml(a.content).replace(/\n/g, '<br>')}</div>
+        `;
+      } catch (e) {
+        box.innerHTML = '<div class="empty">' + escapeHtml(e.message || '文章不存在') + '</div>';
+      }
+    }
+    init();
+  </script>
+</body>
+</html>

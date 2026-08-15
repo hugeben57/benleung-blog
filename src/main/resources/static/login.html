@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 / 注册 - Benleung 博客</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="auth-box">
+    <h1 class="auth-title">Benleung 博客</h1>
+    <div class="tabs">
+      <button id="tab-login" class="active" onclick="switchTab('login')">登录</button>
+      <button id="tab-signup" onclick="switchTab('signup')">注册</button>
+    </div>
+
+    <form id="login-form" onsubmit="return doLogin(event)">
+      <div class="form-group">
+        <label>用户名</label>
+        <input id="login-name" type="text" placeholder="请输入用户名" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input id="login-pwd" type="password" placeholder="请输入密码" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">登 录</button>
+    </form>
+
+    <form id="signup-form" style="display:none" onsubmit="return doSignUp(event)">
+      <div class="form-group">
+        <label>用户名</label>
+        <input id="signup-name" type="text" placeholder="请输入用户名" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input id="signup-pwd" type="password" placeholder="请输入密码" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>确认密码</label>
+        <input id="signup-pwd2" type="password" placeholder="请再次输入密码">
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">注 册</button>
+    </form>
+
+    <div class="auth-tip">
+      <button onclick="guest()">以游客身份访问博客</button>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    // 已登录直接进主页
+    if (getToken()) location.href = 'index.html';
+
+    function switchTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('login-form').style.display = isLogin ? 'block' : 'none';
+      document.getElementById('signup-form').style.display = isLogin ? 'none' : 'block';
+      document.getElementById('tab-login').className = isLogin ? 'active' : '';
+      document.getElementById('tab-signup').className = isLogin ? '' : 'active';
+    }
+
+    async function doLogin(e) {
+      e.preventDefault();
+      const userName = document.getElementById('login-name').value.trim();
+      const password = document.getElementById('login-pwd').value;
+      if (!userName || !password) { toast('请输入用户名和密码'); return; }
+      try {
+        const data = await API.signIn(userName, password);
+        saveLogin(data.token, data.role);
+        toast('登录成功');
+        setTimeout(() => {
+          location.href = data.role === 1 ? 'admin.html' : 'index.html';
+        }, 300);
+      } catch (err) {
+        toast(err.message || '登录失败');
+      }
+    }
+
+    async function doSignUp(e) {
+      e.preventDefault();
+      const userName = document.getElementById('signup-name').value.trim();
+      const password = document.getElementById('signup-pwd').value;
+      const password2 = document.getElementById('signup-pwd2').value;
+      if (!userName || !password) { toast('请输入用户名和密码'); return; }
+      if (password !== password2) { toast('两次输入的密码不一致'); return; }
+      try {
+        await API.signUp(userName, password);
+        toast('注册成功，请登录');
+        document.getElementById('login-name').value = userName;
+        document.getElementById('login-pwd').value = '';
+        switchTab('login');
+      } catch (err) {
+        toast(err.message || '注册失败');
+      }
+    }
+
+    function guest() {
+      clearAuth();
+      location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
