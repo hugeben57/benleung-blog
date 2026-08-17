@@ -36,6 +36,21 @@ a:hover { text-decoration:underline; }
 .btn-ghost:hover { background:#f3f4f6; }
 .btn-block { width:100%; }
 
+/* ===== 分类栏 ===== */
+.category-bar { display:flex; flex-wrap:wrap; gap:10px; margin:24px 0 8px; align-items:center; }
+.cat {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 14px; border-radius:999px; border:1px solid #d1d5db;
+  background:#fff; color:#374151; font-size:14px; cursor:pointer;
+  transition:all .15s;
+}
+.cat:hover { border-color:#2d6cdf; color:#2d6cdf; }
+.cat.active { background:#2d6cdf; border-color:#2d6cdf; color:#fff; }
+.cat-count { font-size:12px; opacity:.7; }
+
+/* ===== 分页 ===== */
+.pagination { text-align:center; margin:24px 0 40px; }
+
 /* ===== 博客列表 ===== */
 .blog-list { display:flex; flex-direction:column; gap:16px; margin:24px 0; }
 .blog-card {

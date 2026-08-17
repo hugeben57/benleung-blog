@@ -15,13 +15,24 @@
   </header>
 
   <div class="container">
+    <div class="category-bar" id="category-bar"></div>
     <div class="blog-list" id="blog-list">
       <div class="empty">加载中...</div>
+    </div>
+    <div class="pagination" id="pagination" style="display:none">
+      <button class="btn btn-outline" onclick="loadMore()">加载更多</button>
     </div>
   </div>
 
   <script src="js/api.js"></script>
   <script>
+    const PAGE_SIZE = 6;
+    let currentType = '';
+    let currentPage = 1;
+    let accumulated = [];
+    let hasMore = true;
+    let loading = false;
+
     function renderBlogs(list) {
       const box = document.getElementById('blog-list');
       if (!list || list.length === 0) {
@@ -34,21 +45,87 @@
           ${b.description ? `<div class="desc">${escapeHtml(b.description)}</div>` : ''}
           <div class="meta">
             ${b.type ? `<span class="tag">${escapeHtml(b.type)}</span>` : ''}
-            ${b.publishedTime ? `<span>发布：${formatTime(b.publishedTime)}</span>` : ''}
+            <span>创建：${formatTime(b.createTime)}</span>
             <span>更新：${formatTime(b.updateTime)}</span>
           </div>
         </div>
       `).join('');
     }
 
+    function updatePaginationBtn() {
+      document.getElementById('pagination').style.display = hasMore ? 'block' : 'none';
+    }
+
+    async function loadBlogs(reset) {
+      const box = document.getElementById('blog-list');
+      if (reset) {
+        currentPage = 1;
+        accumulated = [];
+        box.innerHTML = '<div class="empty">加载中...</div>';
+      }
+      try {
+        const list = currentType
+          ? await API.getBlogByTypes(currentType)
+          : await API.getBlogPages(currentPage, PAGE_SIZE);
+        if (currentType) hasMore = false;
+        else hasMore = !!list && list.length >= PAGE_SIZE;
+
+        if (!list || list.length === 0) {
+          if (reset) box.innerHTML = '<div class="empty">暂无文章</div>';
+        } else {
+          accumulated = accumulated.concat(list);
+          renderBlogs(accumulated);
+          currentPage++;
+        }
+      } catch (e) {
+        if (reset) {
+          box.innerHTML = '<div class="empty">加载失败：' + escapeHtml(e.message || '网络错误') + '</div>';
+        }
+        // 非首屏加载失败（如分页取到空页）视为已到末尾，隐藏加载按钮
+        hasMore = false;
+      }
+      updatePaginationBtn();
+    }
+
+    function loadMore() {
+      if (loading) return;
+      loading = true;
+      loadBlogs(false).finally(() => { loading = false; });
+    }
+
+    function selectType(type) {
+      if (currentType === type) return;
+      currentType = type;
+      document.querySelectorAll('#category-bar .cat').forEach(el => {
+        el.classList.toggle('active', (el.getAttribute('data-type') || '') === type);
+      });
+      loadBlogs(true);
+    }
+
+    async function loadCategories() {
+      const bar = document.getElementById('category-bar');
+      try {
+        const types = await API.getBlogTypes();
+        let html = '<button class="cat active" data-type="">全部</button>';
+        (types || []).forEach(t => {
+          const type = t.type == null ? '' : String(t.type);
+          if (!type) return;
+          html += `<button class="cat" data-type="${escapeHtml(type)}">${escapeHtml(type)}<span class="cat-count">${t.count}</span></button>`;
+        });
+        bar.innerHTML = html;
+      } catch (e) {
+        bar.innerHTML = '<button class="cat active" data-type="">全部</button>';
+      }
+      bar.addEventListener('click', e => {
+        const btn = e.target.closest('.cat');
+        if (btn) selectType(btn.getAttribute('data-type') || '');
+      });
+    }
+
     (async function init() {
       renderNav();
-      try {
-        renderBlogs(await API.getBlogList());
-      } catch (e) {
-        document.getElementById('blog-list').innerHTML =
-          '<div class="empty">加载失败：' + escapeHtml(e.message || '网络错误') + '</div>';
-      }
+      await loadCategories();
+      await loadBlogs(true);
     })();
   </script>
 </body>

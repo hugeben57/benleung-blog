@@ -19,7 +19,7 @@ public interface IBlogService {
 
     Result<BlogVO> getBlogById(Long id);
 
-    Result<List<BlogListVO>> getBlogList();
+//    Result<List<BlogListVO>> getBlogList();
 
     Result<List<BlogListVO>> getAdminBlogList();
 

@@ -47,11 +47,17 @@ const API = {
   },
 
   // ---- 博客（公开）----
-  getBlogList() {
-    return this.request('/blog/getBlogList');
-  },
   getBlogById(id) {
     return this.request('/blog/getBlogById/' + id);
+  },
+  getBlogTypes() {
+    return this.request('/blog/getBlogTypes');
+  },
+  getBlogByTypes(type) {
+    return this.request('/blog/getBlogByTypes?type=' + encodeURIComponent(type));
+  },
+  getBlogPages(currentPage, pageSize) {
+    return this.request('/blog/getBlogPages?currentPage=' + currentPage + '&pageSize=' + pageSize);
   },
 
   // ---- 博客（仅管理员，带 token）----

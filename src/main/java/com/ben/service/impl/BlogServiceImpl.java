@@ -48,8 +48,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
 
     @Override
     @Caching(evict = {
-            @CacheEvict(cacheNames = "blog", key = "'blogList'"),
-            @CacheEvict(cacheNames = "blog", key = "'adminBlogList'")
+            @CacheEvict(cacheNames = "blogPage"),
+            @CacheEvict(cacheNames = "blog", key = "'adminBlogList'"),
+            @CacheEvict(cacheNames = "blog", allEntries = true)
     })
     public <T> Result<T> deleteBlog(Long id) {
         if(removeById(id)){
@@ -60,8 +61,10 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
 
     @Override
     @Caching(evict = {
-            @CacheEvict(cacheNames = "blog", key = "'blogList'"),
-            @CacheEvict(cacheNames = "blog", key = "'adminBlogList'")
+            @CacheEvict(cacheNames = "blogPage"),
+            @CacheEvict(cacheNames = "blog", key = "'adminBlogList'"),
+            @CacheEvict(cacheNames = "blog", allEntries = true)
+
     })
     public <T> Result<T> updateBlog(Long id, BlogDTO blogDTO) {
         Blog blog=new Blog();
@@ -85,23 +88,23 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         return Result.success(blogVO);
     }
 
-    @Override
-    @Cacheable(cacheNames = "blog",key = "'blogList'",unless = "#result.data==null")
-    public Result<List<BlogListVO>> getBlogList() {
-        log.info("走数据库查询");
-        LambdaQueryWrapper<Blog> wrapper=new LambdaQueryWrapper<>();
-        wrapper.eq(Blog::getPublished,1);
-        List<Blog> blogList=list(wrapper);
-        if(blogList==null || blogList.isEmpty()){
-            return Result.fail("没有找到文章");
-        }
-        List<BlogListVO> blogVOList=blogList.stream().map(blog->{
-            BlogListVO blogListVO=new BlogListVO();
-            BeanUtils.copyProperties(blog,blogListVO);
-            return blogListVO;
-        }).toList();
-        return Result.success(blogVOList);
-    }
+//    @Override
+//    @Cacheable(cacheNames = "blog",key = "'blogList'",unless = "#result.data==null")
+//    public Result<List<BlogListVO>> getBlogList() {
+//        log.info("走数据库查询");
+//        LambdaQueryWrapper<Blog> wrapper=new LambdaQueryWrapper<>();
+//        wrapper.eq(Blog::getPublished,1);
+//        List<Blog> blogList=list(wrapper);
+//        if(blogList==null || blogList.isEmpty()){
+//            return Result.fail("没有找到文章");
+//        }
+//        List<BlogListVO> blogVOList=blogList.stream().map(blog->{
+//            BlogListVO blogListVO=new BlogListVO();
+//            BeanUtils.copyProperties(blog,blogListVO);
+//            return blogListVO;
+//        }).toList();
+//        return Result.success(blogVOList);
+//    }
 
 
     @Override
@@ -122,8 +125,10 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
 
     @Override
     @Caching(evict = {
-            @CacheEvict(cacheNames = "blog", key = "'blogList'"),
-            @CacheEvict(cacheNames = "blog", key = "'adminBlogList'")
+            @CacheEvict(cacheNames = "blogPage"),
+            @CacheEvict(cacheNames = "blog", key = "'adminBlogList'"),
+            @CacheEvict(cacheNames = "blog", allEntries = true)
+
     })
     public <T> Result<T> published(Long id) {
         Blog blog=getById(id);
@@ -141,9 +146,10 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
     }
 
     @Override
+    @Cacheable(cacheNames = "blog", key = "#type")
     public Result<List<BlogVO>> getBlogByTypes(String type) {
         LambdaQueryWrapper<Blog> wrapper=new LambdaQueryWrapper<>();
-        wrapper.eq(Blog::getType,type);
+        wrapper.eq(Blog::getType,type).eq(Blog::getPublished,1);
         List<Blog> blogList=list(wrapper);
         if (blogList==null || blogList.isEmpty()){
             return Result.fail("文章列表为空");
@@ -157,7 +163,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
     }
 
     @Override
+    @Cacheable(cacheNames = "blogPage", key = "#currentPage + '_' + #pageSize")
     public Result<List<BlogVO>> getBlogPage(Long currentPage,Long pageSize){
+        log.info("数据库分页");
         //参数对象
         Page<Blog> pages=new Page<>(currentPage,pageSize);
         //查询条件

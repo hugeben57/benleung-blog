@@ -38,10 +38,10 @@ public class BlogController {
         return blogService.getBlogById(id);
     }
 
-    @GetMapping("/getBlogList")
-    public Result<List<BlogListVO>> getBlogList(){
-        return blogService.getBlogList();
-    }
+//    @GetMapping("/getBlogList")
+//    public Result<List<BlogListVO>> getBlogList(){
+//        return blogService.getBlogList();
+//    }
 
     @GetMapping("/getAdminBlogList")
     public Result<List<BlogListVO>> getAdminBlogList(){
