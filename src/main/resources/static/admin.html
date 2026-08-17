@@ -26,11 +26,11 @@
     <table class="admin-table">
       <thead>
         <tr>
-          <th>ID</th><th>标题</th><th>类型</th><th>状态</th><th>更新时间</th><th>操作</th>
+          <th>ID</th><th>标题</th><th>类型</th><th>状态</th><th>创建时间</th><th>更新时间</th><th>操作</th>
         </tr>
       </thead>
       <tbody id="blog-rows">
-        <tr><td colspan="6" class="empty">加载中...</td></tr>
+        <tr><td colspan="7" class="empty">加载中...</td></tr>
       </tbody>
     </table>
   </div>
@@ -54,13 +54,6 @@
           <input id="f-desc" type="text" placeholder="一句话描述">
         </div>
         <div class="form-group">
-          <label>发布状态</label>
-          <select id="f-published">
-            <option value="1">已发布</option>
-            <option value="0">草稿</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label>正文</label>
           <textarea id="f-content" placeholder="文章正文"></textarea>
         </div>
@@ -82,9 +75,9 @@
     async function loadList() {
       const tbody = document.getElementById('blog-rows');
       try {
-        const list = await API.getBlogList();
+        const list = await API.getAdminBlogList();
         if (!list || list.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="empty">暂无文章</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="empty">暂无文章</td></tr>';
           return;
         }
         tbody.innerHTML = list.map(b => `
@@ -92,9 +85,11 @@
             <td>${b.id}</td>
             <td>${escapeHtml(b.title)}</td>
             <td>${b.type ? escapeHtml(b.type) : '-'}</td>
-            <td>${b.published === 1 ? '<span class="badge">已发布</span>' : '<span class="badge badge-draft">草稿</span>'}</td>
+            <td>${b.published === 1 ? '<span class="badge">已发布</span>' : '<span class="badge badge-draft">未发布</span>'}</td>
+            <td>${formatTime(b.createTime)}</td>
             <td>${formatTime(b.updateTime)}</td>
             <td>
+              ${b.published === 1 ? '' : `<button class="btn btn-outline" onclick="publishBlog(${b.id})">发布</button>`}
               <button class="btn btn-outline" onclick="editBlog(${b.id})">编辑</button>
               <button class="btn btn-danger" onclick="removeBlog(${b.id})">删除</button>
             </td>
@@ -111,7 +106,6 @@
       document.getElementById('f-title').value = '';
       document.getElementById('f-type').value = '';
       document.getElementById('f-desc').value = '';
-      document.getElementById('f-published').value = '1';
       document.getElementById('f-content').value = '';
       document.getElementById('modal').classList.add('show');
     }
@@ -124,7 +118,6 @@
         document.getElementById('f-title').value = a.title || '';
         document.getElementById('f-type').value = a.type || '';
         document.getElementById('f-desc').value = a.description || '';
-        document.getElementById('f-published').value = a.published === 0 ? '0' : '1';
         document.getElementById('f-content').value = a.content || '';
         document.getElementById('modal').classList.add('show');
       } catch (e) {
@@ -142,7 +135,6 @@
         title: document.getElementById('f-title').value.trim(),
         type: document.getElementById('f-type').value.trim(),
         description: document.getElementById('f-desc').value.trim(),
-        published: Number(document.getElementById('f-published').value),
         content: document.getElementById('f-content').value,
       };
       if (!payload.title || !payload.content) { toast('标题和正文不能为空'); return; }
@@ -159,6 +151,17 @@
         loadList();
       } catch (err) {
         handleError(err);
+      }
+    }
+
+    async function publishBlog(id) {
+      if (!confirm('确定发布这篇文章吗？发布后游客将能看到。')) return;
+      try {
+        await API.published(id);
+        toast('发布成功');
+        loadList();
+      } catch (e) {
+        handleError(e);
       }
     }
 

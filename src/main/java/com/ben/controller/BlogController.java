@@ -1,4 +1,4 @@
-package com.ben.contorller;
+package com.ben.controller;
 
 import com.ben.model.dto.BlogDTO;
 import com.ben.model.entity.Result;
@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/blog")
@@ -41,6 +42,32 @@ public class BlogController {
     public Result<List<BlogListVO>> getBlogList(){
         return blogService.getBlogList();
     }
+
+    @GetMapping("/getAdminBlogList")
+    public Result<List<BlogListVO>> getAdminBlogList(){
+        return blogService.getAdminBlogList();
+    }
+
+    @PostMapping("published/{id}")
+    public <T> Result<T> published(@PathVariable Long id){
+        return blogService.published(id);
+    }
+
+    @GetMapping("/getBlogTypes")
+    public Result<List<Map<String, Long>>> getBlogTypes(){
+        return blogService.getBlogTypes();
+    }
+
+    @GetMapping("getBlogByTypes")
+    public Result<List<BlogVO>> getBlogByTypes(@RequestParam String type){
+        return blogService.getBlogByTypes(type);
+    }
+
+    @GetMapping("/getBlogPages")
+    public Result<List<BlogVO>> getBlogPages(@RequestParam(defaultValue = "1") Long currentPage,@RequestParam(defaultValue = "6") Long pageSize){
+        return blogService.getBlogPage(currentPage,pageSize);
+    }
+
 
 
 }

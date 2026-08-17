@@ -16,5 +16,7 @@ create table if not exists `user`(
     role tinyint not null default 0
 )
 
+alter table blog add column published_time datetime not null;
+
 -- 初始管理员（role=1），需要管理员登录时取消注释执行一次：
 -- insert into `user`(user_name, password, role) values('admin', '123456', 1);

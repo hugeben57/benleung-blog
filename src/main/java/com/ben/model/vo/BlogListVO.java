@@ -15,6 +15,8 @@ public class BlogListVO {
 
     private LocalDateTime updateTime;
 
+    private LocalDateTime publishedTime;
+
     private String description;
 
     private Integer published;

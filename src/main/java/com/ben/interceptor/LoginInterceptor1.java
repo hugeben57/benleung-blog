@@ -28,7 +28,11 @@ public class LoginInterceptor1 implements HandlerInterceptor {
             sendErrorResponse(response, 401, "noSignIn");
             return false;
         }
+        long minTime = 15*60*1000;
         Map<String, Object> claim = JwtUtils.parseToken(token);
+        if (JwtUtils.getExpireTime(token)<minTime){
+            response.setHeader("Authorization", JwtUtils.getToken(claim));
+        }
         ThreadLocalUtil.set(claim);
         return true;
     }

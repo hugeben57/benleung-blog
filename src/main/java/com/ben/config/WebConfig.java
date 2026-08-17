@@ -20,10 +20,10 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginInterceptor1)
                 .addPathPatterns("/user/**", "/blog/**")
-                .excludePathPatterns("/user/signIn","/user/signUp","/blog/getBlogById/*","/blog/getBlogList");
+                .excludePathPatterns("/user/signIn","/user/signUp","/blog/getBlogById/*","/blog/getBlogList","/blog/getBlogTypes","/blog/getBlogPages","/blog/getBlogByTypes");
 
         registry.addInterceptor(loginInterceptor2)
-                .addPathPatterns("/blog/deleteBlog/*","/blog/updateBlog/*","/blog/addBlog");
+                .addPathPatterns("/blog/deleteBlog/*","/blog/updateBlog/*","/blog/addBlog","/blog/getAdminBlogList","/blog/published/*");
     }
 
 

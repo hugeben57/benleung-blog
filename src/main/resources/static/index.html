@@ -34,7 +34,8 @@
           ${b.description ? `<div class="desc">${escapeHtml(b.description)}</div>` : ''}
           <div class="meta">
             ${b.type ? `<span class="tag">${escapeHtml(b.type)}</span>` : ''}
-            <span>${formatTime(b.createTime)}</span>
+            ${b.publishedTime ? `<span>发布：${formatTime(b.publishedTime)}</span>` : ''}
+            <span>更新：${formatTime(b.updateTime)}</span>
           </div>
         </div>
       `).join('');

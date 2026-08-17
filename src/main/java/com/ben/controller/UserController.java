@@ -1,4 +1,4 @@
-package com.ben.contorller;
+package com.ben.controller;
 
 import com.ben.model.dto.UserDTO;
 import com.ben.model.entity.Result;

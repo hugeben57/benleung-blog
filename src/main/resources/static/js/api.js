@@ -25,6 +25,12 @@ const API = {
       throw { status: res.status, message: '请求失败(' + res.status + ')' };
     }
 
+    // 滑动续期：后端在 token 临近过期时通过响应头下发新 token，这里覆盖本地存储
+    const renewedToken = res.headers.get('Authorization');
+    if (renewedToken) {
+      saveLogin(renewedToken, getRole());
+    }
+
     const data = await res.json();
     if (data.code !== 200) {
       throw { status: data.code, message: data.message || '操作失败' };
@@ -49,6 +55,12 @@ const API = {
   },
 
   // ---- 博客（仅管理员，带 token）----
+  getAdminBlogList() {
+    return this.request('/blog/getAdminBlogList', { auth: true });
+  },
+  published(id) {
+    return this.request('/blog/published/' + id, { method: 'POST', auth: true });
+  },
   addBlog(payload) {
     return this.request('/blog/addBlog', { method: 'POST', body: payload, auth: true });
   },

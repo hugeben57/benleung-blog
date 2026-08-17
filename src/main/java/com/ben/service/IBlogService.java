@@ -7,6 +7,7 @@ import com.ben.model.vo.BlogListVO;
 import com.ben.model.vo.BlogVO;
 
 import java.util.List;
+import java.util.Map;
 
 public interface IBlogService {
 
@@ -19,5 +20,15 @@ public interface IBlogService {
     Result<BlogVO> getBlogById(Long id);
 
     Result<List<BlogListVO>> getBlogList();
+
+    Result<List<BlogListVO>> getAdminBlogList();
+
+    <T> Result<T> published(Long id);
+
+    Result<List<Map<String,Long>>> getBlogTypes();
+
+    Result<List<BlogVO>> getBlogByTypes(String type);
+
+    Result<List<BlogVO>> getBlogPage(Long currentPage,Long pageSize);
 
 }

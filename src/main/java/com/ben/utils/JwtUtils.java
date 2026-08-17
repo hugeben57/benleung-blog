@@ -4,6 +4,7 @@ package com.ben.utils;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.Map;
@@ -28,5 +29,12 @@ public class JwtUtils {
                 .verify(token)
                 .getClaim("claim")
                 .asMap();
+    }
+
+    public static long getExpireTime(String token){
+        DecodedJWT jwt=JWT.decode(token);
+        Date expireTime = jwt.getExpiresAt();
+        long now =System.currentTimeMillis();
+         return expireTime.getTime() - now;
     }
 }

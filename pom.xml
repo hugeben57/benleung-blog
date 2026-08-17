@@ -66,6 +66,17 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!--    aop    -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>3.5.9</version>
+        </dependency>
 
     </dependencies>
 

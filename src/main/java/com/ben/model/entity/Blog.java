@@ -37,4 +37,7 @@ public class Blog {
     @TableField("type")
     private String type;
 
+    @TableField("published_time")
+    private LocalDateTime publishedTime;
+
 }
