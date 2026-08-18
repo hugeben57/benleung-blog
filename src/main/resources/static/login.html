@@ -54,6 +54,10 @@
     // 已登录直接进首页
     if (getToken()) location.href = 'blogFront.html';
 
+    // 从管理页等被踢回来时展示提示（如"登录已过期"）
+    const msgParam = new URLSearchParams(location.search).get('msg');
+    if (msgParam) toast(msgParam);
+
     function switchTab(tab) {
       const isLogin = tab === 'login';
       document.getElementById('login-form').style.display = isLogin ? 'block' : 'none';

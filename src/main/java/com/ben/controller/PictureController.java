@@ -35,4 +35,9 @@ public class PictureController {
     public Result<Void> deletePictureById(@PathVariable Long id) {
         return pictureService.deletePictureById(id);
     }
+
+    @PostMapping("/updatePicture/{id}")
+    public Result<Void> updatePicture(@PathVariable Long id, String pictureName) {
+        return pictureService.updatePicture(id, pictureName);
+    }
 }

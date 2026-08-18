@@ -13,5 +13,7 @@ public interface IUserService {
 
     Result<Map<String, Object>> signIn(UserDTO userDTO);
 
+    Result<Map<String, Object>> getUserInfo();
+
 
 }

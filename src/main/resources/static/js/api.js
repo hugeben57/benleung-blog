@@ -53,6 +53,10 @@ const API = {
   signIn(userName, password) {
     return this.request('/user/signIn', { method: 'POST', body: { userName, password } });
   },
+  // 校验当前登录状态：token 有效返回用户信息，过期/无效返回 401
+  getUserInfo() {
+    return this.request('/user/info', { auth: true });
+  },
 
   // ---- 博客（公开）----
   getBlogById(id) {
@@ -98,6 +102,9 @@ const API = {
   deletePictureById(id) {
     return this.request('/Picture/deletePictureById/' + id, { method: 'DELETE', auth: true });
   },
+  updatePicture(id, pictureName) {
+    return this.request('/Picture/updatePicture/' + id + '?pictureName=' + encodeURIComponent(pictureName || ''), { method: 'POST', auth: true });
+  },
 };
 
 // ===== Auth（localStorage）=====
@@ -125,7 +132,7 @@ function logout() {
 function handleError(e) {
   if (e && e.status === 401) {
     clearAuth();
-    location.href = 'login.html';
+    location.href = 'login.html?msg=' + encodeURIComponent('登录已过期，请重新登录');
     return;
   }
   if (e && e.status === 403) {

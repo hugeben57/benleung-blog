@@ -28,13 +28,19 @@ public class LoginInterceptor1 implements HandlerInterceptor {
             sendErrorResponse(response, 401, "noSignIn");
             return false;
         }
-        long minTime = 15*60*1000;
-        Map<String, Object> claim = JwtUtils.parseToken(token);
-        if (JwtUtils.getExpireTime(token)<minTime){
-            response.setHeader("Authorization", JwtUtils.getToken(claim));
+        try {
+            Map<String, Object> claim = JwtUtils.parseToken(token);
+            long minTime = 15*60*1000;
+            if (JwtUtils.getExpireTime(token)<minTime){
+                response.setHeader("Authorization", JwtUtils.getToken(claim));
+            }
+            ThreadLocalUtil.set(claim);
+            return true;
+        } catch (Exception e) {
+            // token 已过期或非法，统一按未登录处理
+            sendErrorResponse(response, 401, "noSignIn");
+            return false;
         }
-        ThreadLocalUtil.set(claim);
-        return true;
     }
 
     @Override

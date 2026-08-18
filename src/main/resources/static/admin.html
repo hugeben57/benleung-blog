@@ -67,9 +67,23 @@
 
   <script src="js/api.js"></script>
   <script>
-    // 守卫：仅管理员可进入
-    if (!getToken() || getRole() !== 1) {
-      location.href = 'login.html';
+    // 守卫：仅管理员可进入。本地快检 + 服务端校验 token 是否过期
+    async function initAdmin() {
+      if (!getToken() || getRole() !== 1) {
+        location.href = 'login.html';
+        return;
+      }
+      try {
+        await API.getUserInfo();
+        loadList();
+      } catch (e) {
+        if (e && e.status === 401) {
+          clearAuth();
+          location.href = 'login.html?msg=' + encodeURIComponent('登录已过期，请重新登录');
+        } else {
+          handleError(e);
+        }
+      }
     }
 
     async function loadList() {
@@ -176,7 +190,7 @@
       }
     }
 
-    loadList();
+    initAdmin();
   </script>
 </body>
 </html>

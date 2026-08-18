@@ -17,4 +17,6 @@ public interface IPictureService {
 
     Result<Void> deletePictureById(Long id);
 
+    Result<Void> updatePicture(Long id, String pictureName);
+
 }

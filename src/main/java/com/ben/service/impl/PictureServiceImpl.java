@@ -70,4 +70,15 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         removeById(id);
         return Result.success();
     }
+
+    @Override
+    public Result<Void> updatePicture(Long id, String pictureName) {
+        Picture picture = getById(id);
+        if (picture == null) {
+            return Result.fail("没有找到图片");
+        }
+        picture.setPictureName(pictureName);
+        updateById(picture);
+        return Result.success();
+    }
 }

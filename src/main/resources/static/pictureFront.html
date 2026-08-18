@@ -132,6 +132,44 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
+        /* 放大查看 */
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 300;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 14px;
+            background: rgba(20, 40, 35, 0.78);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            cursor: zoom-out;
+        }
+        .lightbox.show { display: flex; }
+        .lightbox img {
+            max-width: 88vw;
+            max-height: 78vh;
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            cursor: default;
+        }
+        .lightbox-caption {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            font-size: 15px;
+            background: rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 8px 18px;
+            border-radius: 999px;
+        }
+        .lightbox-caption .btn { padding: 6px 14px; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -167,6 +205,30 @@
     </div>
 </div>
 
+<!-- 图片放大查看 -->
+<div class="lightbox" id="lightbox">
+    <img id="lightboxImg" alt="照片">
+    <div class="lightbox-caption">
+        <span id="lightboxName"></span>
+        <button class="btn btn-primary" id="renameBtn" onclick="openRenameModal()" style="display:none">重命名</button>
+    </div>
+</div>
+
+<!-- 重命名照片弹窗 -->
+<div class="modal-mask" id="renameModal">
+    <div class="modal">
+        <div class="modal-title">重命名照片</div>
+        <div class="form-group">
+            <label>照片名称</label>
+            <input id="renameInput" type="text" placeholder="输入新的照片名称">
+        </div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeRenameModal()">取消</button>
+            <button type="button" class="btn btn-primary" onclick="doRename()">保存</button>
+        </div>
+    </div>
+</div>
+
 <script src="js/api.js"></script>
 <script>
     const board = document.getElementById('board');
@@ -198,6 +260,11 @@
         el.innerHTML = del +
             '<img src="' + escapeHtml(pic.url) + '" alt="' + escapeHtml(name) + '" onerror="this.closest(\'.photo-item\').style.display=\'none\'">' +
             '<div class="photo-name">' + escapeHtml(name) + '</div>';
+        el.addEventListener('click', (e) => {
+            if (dragged) { dragged = false; return; }
+            if (e.target.closest('.del-btn')) return;
+            openLightbox(pic, el);
+        });
         board.appendChild(el);
         scatter(el);
         checkEmpty();
@@ -290,9 +357,65 @@
         }
     }
 
+    // ========== 放大查看 & 重命名 ==========
+    let currentPic = null;   // 当前放大的照片数据
+    let currentEl = null;    // 对应的卡片 DOM
+
+    function openLightbox(pic, el) {
+        currentPic = pic;
+        currentEl = el;
+        document.getElementById('lightboxImg').src = pic.url;
+        document.getElementById('lightboxName').textContent = pic.pictureName || '';
+        document.getElementById('renameBtn').style.display = isAdmin ? '' : 'none';
+        document.getElementById('lightbox').classList.add('show');
+    }
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('show');
+        currentPic = null;
+        currentEl = null;
+    }
+
+    function openRenameModal() {
+        if (!currentPic) return;
+        document.getElementById('renameInput').value = currentPic.pictureName || '';
+        document.getElementById('renameModal').classList.add('show');
+    }
+    function closeRenameModal() {
+        document.getElementById('renameModal').classList.remove('show');
+    }
+
+    async function doRename() {
+        if (!currentPic) return;
+        const name = document.getElementById('renameInput').value.trim();
+        if (!name) { toast('请输入照片名称'); return; }
+        try {
+            await API.updatePicture(currentPic.id, name);
+            currentPic.pictureName = name;
+            const nameEl = currentEl && currentEl.querySelector('.photo-name');
+            if (nameEl) nameEl.textContent = name;
+            document.getElementById('lightboxName').textContent = name;
+            closeRenameModal();
+            toast('重命名成功');
+        } catch (err) {
+            toast(err.message || '重命名失败');
+        }
+    }
+
+    document.getElementById('lightbox').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('lightbox')) closeLightbox();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeLightbox();
+            closeRenameModal();
+        }
+    });
+
     // ========== 拖拽（照片置顶、跟随鼠标）==========
     let dragTarget = null;
     let offsetX = 0, offsetY = 0;
+    let downX = 0, downY = 0;
+    let dragged = false;
 
     board.addEventListener('mousedown', (e) => {
         // 点删除按钮或工具条时不触发拖拽
@@ -300,6 +423,9 @@
         const item = e.target.closest('.photo-item');
         if (!item) return;
         dragTarget = item;
+        dragged = false;
+        downX = e.clientX;
+        downY = e.clientY;
         dragTarget.style.zIndex = 999;
         const rect = dragTarget.getBoundingClientRect();
         offsetX = e.clientX - rect.left;
@@ -308,6 +434,7 @@
 
     document.addEventListener('mousemove', (e) => {
         if (!dragTarget) return;
+        if (!dragged && (Math.abs(e.clientX - downX) > 4 || Math.abs(e.clientY - downY) > 4)) dragged = true;
         dragTarget.style.left = (e.clientX - offsetX) + 'px';
         dragTarget.style.top = (e.clientY - offsetY) + 'px';
     });

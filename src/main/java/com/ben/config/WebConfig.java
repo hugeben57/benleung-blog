@@ -32,7 +32,7 @@ public class WebConfig implements WebMvcConfigurer {
 
         registry.addInterceptor(loginInterceptor2)
                 .addPathPatterns("/blog/deleteBlog/*","/blog/updateBlog/*","/blog/addBlog","/blog/getAdminBlogList","/blog/published/*",
-                        "/Picture/uploadPicture", "/Picture/deletePictureById/*");
+                        "/Picture/uploadPicture", "/Picture/deletePictureById/*","/Picture/updatePicture/*");
     }
 
 

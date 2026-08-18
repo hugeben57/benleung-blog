@@ -8,6 +8,7 @@ import com.ben.model.entity.Result;
 import com.ben.model.entity.User;
 import com.ben.service.IUserService;
 import com.ben.utils.JwtUtils;
+import com.ben.utils.ThreadLocalUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -54,6 +55,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         Map<String,Object> data=new HashMap<>();
         data.put("token",token);
         data.put("role",userRecord.getRole());
+        return Result.success(data);
+    }
+
+    @Override
+    public Result<Map<String, Object>> getUserInfo() {
+        Map<String, Object> claim = ThreadLocalUtil.get();
+        Long userId = ((Number) claim.get("userId")).longValue();
+        User user = getById(userId);
+        if (user == null) {
+            return Result.fail("用户不存在");
+        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("userId", user.getId());
+        data.put("userName", user.getUserName());
+        data.put("role", user.getRole());
         return Result.success(data);
     }
 }
