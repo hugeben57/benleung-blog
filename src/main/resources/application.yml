@@ -15,6 +15,11 @@ spring:
       port: 6379
       password: 123456
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
@@ -23,5 +28,11 @@ mybatis-plus:
     db-config:
       id-type: auto
 
+
+minio:
+  endpoint: http://127.0.0.1:9000  # 修改你的 MinIO 端点
+  accessKey: minioadmin # 修改你的 MinIO Access Key
+  secretKey: minioadmin # 修改你的 MinIO Secret Key
+  bucket: ben-blog-data # 确认 Bucket 名称与你创建的一致
 
 

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>照片墙 - Benleung 博客</title>
+    <link rel="stylesheet" href="css/glass.css">
+    <style>
+        /* 全屏照片画布，渐变底色与主页统一 */
+        .board {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e8f6f0 0%, #f9f8d9 50%, #d4f2c8 100%);
+        }
+
+        /* 顶部工具条：毛玻璃 */
+        .wall-toolbar {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 32px rgba(31, 138, 135, 0.14);
+        }
+        .wall-toolbar .title {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 16px;
+            margin-right: 6px;
+            white-space: nowrap;
+        }
+
+        /* 照片卡片：白边 + 阴影，与主页玻璃感呼应 */
+        .photo-item {
+            position: absolute;
+            padding: 8px;
+            background-color: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 5px 18px rgba(31, 138, 135, 0.22);
+            width: min(220px, 60vw);
+            cursor: grab;
+            user-select: none;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .photo-item:active {
+            cursor: grabbing;
+            box-shadow: 0 12px 30px rgba(31, 138, 135, 0.32);
+        }
+        .photo-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 5px;
+        }
+        .photo-item .photo-name {
+            font-size: 12px;
+            color: #5a6b65;
+            padding: 6px 2px 2px;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 删除按钮：管理员悬停显示 */
+        .photo-item .del-btn {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #e5484d;
+            color: #fff;
+            border: none;
+            font-size: 15px;
+            line-height: 1;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(229, 72, 77, 0.4);
+        }
+        .photo-item:hover .del-btn {
+            display: flex;
+        }
+
+        /* 空状态 */
+        .wall-empty {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: #8aa09a;
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        /* 上传弹窗里的文件预览 */
+        .file-preview {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+        .file-preview img {
+            width: 56px;
+            height: 56px;
+            object-fit: cover;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+        .file-preview span {
+            font-size: 13px;
+            color: #5a6b65;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+<div class="board" id="board">
+    <div class="wall-toolbar">
+        <span class="title">📷 照片墙</span>
+        <a class="btn btn-ghost" href="blogFront.html">返回首页</a>
+        <button class="btn btn-primary" id="uploadBtn" style="display:none">＋ 上传照片</button>
+    </div>
+    <div class="wall-empty" id="wallEmpty">暂无照片，快上传第一张吧～</div>
+</div>
+
+<!-- 上传照片弹窗 -->
+<div class="modal-mask" id="uploadModal">
+    <div class="modal">
+        <div class="modal-title">上传照片</div>
+        <div class="form-group">
+            <label>选择图片</label>
+            <input type="file" id="fileInput" accept="image/*">
+            <div class="file-preview" id="filePreview">
+                <img id="previewImg" alt="预览">
+                <span id="previewName"></span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>照片名称</label>
+            <input id="nameInput" type="text" placeholder="给这张照片起个名字">
+        </div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeUploadModal()">取消</button>
+            <button type="button" class="btn btn-primary" onclick="doUpload()">上传</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+    const board = document.getElementById('board');
+    const isAdmin = !!getToken() && getRole() === 1;
+
+    // 管理员才显示上传按钮
+    if (isAdmin) document.getElementById('uploadBtn').style.display = '';
+
+    // ========== 随机散落 ==========
+    function scatter(el) {
+        const rotate = (Math.random() - 0.5) * 14; // -7 ~ 7°
+        const w = window.innerWidth, h = window.innerHeight;
+        const x = Math.random() * Math.max(0, w - 280);
+        const y = 80 + Math.random() * Math.max(0, h - 380);
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        el.style.transform = 'rotate(' + rotate + 'deg)';
+        el.style.zIndex = Math.floor(Math.random() * 100);
+    }
+
+    // ========== 渲染一张照片 ==========
+    function addPhoto(pic) {
+        const el = document.createElement('div');
+        el.className = 'photo-item';
+        const name = pic.pictureName || '';
+        const del = isAdmin
+            ? '<button class="del-btn" title="删除" onclick="removePhoto(' + pic.id + ', this.parentElement)">×</button>'
+            : '';
+        el.innerHTML = del +
+            '<img src="' + escapeHtml(pic.url) + '" alt="' + escapeHtml(name) + '" onerror="this.closest(\'.photo-item\').style.display=\'none\'">' +
+            '<div class="photo-name">' + escapeHtml(name) + '</div>';
+        board.appendChild(el);
+        scatter(el);
+        checkEmpty();
+    }
+
+    function checkEmpty() {
+        const empty = document.getElementById('wallEmpty');
+        const hasPhotos = !!document.querySelectorAll('#board .photo-item').length;
+        empty.style.display = hasPhotos ? 'none' : 'flex';
+    }
+
+    // ========== 加载照片列表 ==========
+    async function loadPictures() {
+        try {
+            const list = await API.getPictures();
+            (list || []).forEach(addPhoto);
+        } catch (e) {
+            const empty = document.getElementById('wallEmpty');
+            empty.style.display = 'flex';
+            empty.textContent = '加载失败：' + (e.message || '网络错误');
+        }
+    }
+
+    // ========== 上传（弹窗：选图片 + 输入照片名称）==========
+    const uploadModal = document.getElementById('uploadModal');
+    const fileInput = document.getElementById('fileInput');
+    const nameInput = document.getElementById('nameInput');
+    const previewImg = document.getElementById('previewImg');
+    const previewName = document.getElementById('previewName');
+    const filePreview = document.getElementById('filePreview');
+    let pendingFile = null;
+
+    function openUploadModal() {
+        pendingFile = null;
+        fileInput.value = '';
+        nameInput.value = '';
+        filePreview.style.display = 'none';
+        uploadModal.classList.add('show');
+    }
+    function closeUploadModal() {
+        uploadModal.classList.remove('show');
+    }
+
+    document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
+
+    // 选择文件后：预览 + 预填名称（可手动修改）
+    fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        pendingFile = file;
+        if (!nameInput.value) {
+            nameInput.value = file.name.replace(/\.[^.]+$/, '') || file.name;
+        }
+        previewName.textContent = file.name;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewImg.src = e.target.result;
+            filePreview.style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    });
+
+    async function doUpload() {
+        if (!pendingFile) { toast('请先选择图片'); return; }
+        const name = nameInput.value.trim();
+        if (!name) { toast('请输入照片名称'); return; }
+        toast('正在上传...');
+        try {
+            await API.uploadPicture(pendingFile, name);
+            toast('上传成功');
+            closeUploadModal();
+            // 重新拉取列表，把新照片追加到墙上
+            const list = await API.getPictures();
+            if (list && list.length) addPhoto(list[list.length - 1]);
+        } catch (err) {
+            toast(err.message || '上传失败');
+        }
+    }
+
+    // ========== 删除 ==========
+    async function removePhoto(id, el) {
+        if (!confirm('确定删除这张照片吗？')) return;
+        try {
+            await API.deletePictureById(id);
+            el.remove();
+            toast('删除成功');
+            checkEmpty();
+        } catch (err) {
+            toast(err.message || '删除失败');
+        }
+    }
+
+    // ========== 拖拽（照片置顶、跟随鼠标）==========
+    let dragTarget = null;
+    let offsetX = 0, offsetY = 0;
+
+    board.addEventListener('mousedown', (e) => {
+        // 点删除按钮或工具条时不触发拖拽
+        if (e.target.closest('.del-btn') || e.target.closest('button') || e.target.closest('.wall-toolbar')) return;
+        const item = e.target.closest('.photo-item');
+        if (!item) return;
+        dragTarget = item;
+        dragTarget.style.zIndex = 999;
+        const rect = dragTarget.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!dragTarget) return;
+        dragTarget.style.left = (e.clientX - offsetX) + 'px';
+        dragTarget.style.top = (e.clientY - offsetY) + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (dragTarget) {
+            dragTarget.style.zIndex = 10;
+            dragTarget = null;
+        }
+    });
+
+    loadPictures();
+</script>
+</body>
+</html>

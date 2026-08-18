@@ -2,14 +2,22 @@
 
 const API = {
   // 基础请求：自动带 token、JSON 解析、非 2xx 抛带状态码的错误
-  async request(url, { method = 'GET', body, auth = false } = {}) {
-    const headers = { 'Content-Type': 'application/json' };
+  // formData=true 时按 multipart 上传（不手动设置 Content-Type，让浏览器带上 boundary）
+  async request(url, { method = 'GET', body, auth = false, formData = false } = {}) {
+    const headers = {};
     if (auth) {
       const token = getToken();
       if (token) headers['Authorization'] = token;
     }
     const options = { method, headers };
-    if (body !== undefined) options.body = JSON.stringify(body);
+    if (body !== undefined) {
+      if (formData) {
+        options.body = body;
+      } else {
+        headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(body);
+      }
+    }
 
     let res;
     try {
@@ -75,6 +83,20 @@ const API = {
   },
   deleteBlog(id) {
     return this.request('/blog/deleteBlog/' + id, { method: 'DELETE', auth: true });
+  },
+
+  // ---- 图片（照片墙）----
+  getPictures() {
+    return this.request('/Picture/getPictures');
+  },
+  uploadPicture(file, pictureName) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('pictureName', pictureName || file.name || '');
+    return this.request('/Picture/uploadPicture', { method: 'POST', body: formData, formData: true, auth: true });
+  },
+  deletePictureById(id) {
+    return this.request('/Picture/deletePictureById/' + id, { method: 'DELETE', auth: true });
   },
 };
 

@@ -48,7 +48,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
 
     @Override
     @Caching(evict = {
-            @CacheEvict(cacheNames = "blogPage"),
+            @CacheEvict(cacheNames = "blogPage",allEntries = true),
             @CacheEvict(cacheNames = "blog", key = "'adminBlogList'"),
             @CacheEvict(cacheNames = "blog", allEntries = true)
     })
@@ -61,7 +61,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
 
     @Override
     @Caching(evict = {
-            @CacheEvict(cacheNames = "blogPage"),
+            @CacheEvict(cacheNames = "blogPage",allEntries = true),
             @CacheEvict(cacheNames = "blog", key = "'adminBlogList'"),
             @CacheEvict(cacheNames = "blog", allEntries = true)
 
@@ -125,7 +125,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
 
     @Override
     @Caching(evict = {
-            @CacheEvict(cacheNames = "blogPage"),
+            @CacheEvict(cacheNames = "blogPage",allEntries = true),
             @CacheEvict(cacheNames = "blog", key = "'adminBlogList'"),
             @CacheEvict(cacheNames = "blog", allEntries = true)
 
