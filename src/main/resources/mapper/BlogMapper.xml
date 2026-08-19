@@ -6,4 +6,8 @@
     <select id="getBlogTypes" resultType="java.util.Map">
         select distinct type, count(id) as count from blog where published = 1 and type is not null group by type;
     </select>
+
+    <select id="getLatestBlogId" resultType="Long">
+        select id from blog order by published_time desc limit 1;
+    </select>
 </mapper>

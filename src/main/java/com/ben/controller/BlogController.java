@@ -68,6 +68,9 @@ public class BlogController {
         return blogService.getBlogPage(currentPage,pageSize);
     }
 
-
+    @GetMapping("/getLatestBlogId")
+    public Long getLatestBlogId(){
+        return blogService.getLatestBlogId();
+    }
 
 }

@@ -9,20 +9,14 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@TableName("picture")
-public class Picture {
-
-    @TableId(type=IdType.AUTO)
+@TableName("music")
+public class Music {
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     @TableField("url")
     private String url;
 
-    @TableField("picture_name")
-    private String pictureName;
-
-    @TableField("is_cover")
-    private Boolean isCover;
-
-
+    @TableField("music_name")
+    private String musicName;
 }

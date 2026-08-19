@@ -26,13 +26,13 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginInterceptor1)
-                .addPathPatterns("/user/**", "/blog/**", "/Picture/**")
-                .excludePathPatterns("/user/signIn","/user/signUp","/blog/getBlogById/*","/blog/getBlogList","/blog/getBlogTypes","/blog/getBlogPages","/blog/getBlogByTypes"
-                ,"/Picture/getPictures", "/Picture/getPictureById/*");
+                .addPathPatterns("/user/**", "/blog/**", "/Picture/**", "/music/**")
+                .excludePathPatterns("/user/signIn","/user/signUp","/blog/getBlogById/*","/blog/getBlogList","/blog/getBlogTypes","/blog/getBlogPages","/blog/getBlogByTypes","/blog/getLatestBlogId"
+                ,"/Picture/getPictures", "/Picture/getPictureById/*","/music/get");
 
         registry.addInterceptor(loginInterceptor2)
                 .addPathPatterns("/blog/deleteBlog/*","/blog/updateBlog/*","/blog/addBlog","/blog/getAdminBlogList","/blog/published/*",
-                        "/Picture/uploadPicture", "/Picture/deletePictureById/*","/Picture/updatePicture/*");
+                        "/Picture/uploadPicture", "/Picture/deletePictureById/*","/Picture/updatePicture/*", "/Picture/setCoverPicture/*", "/music/update", "/music/add");
     }
 
 

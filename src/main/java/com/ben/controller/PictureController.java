@@ -40,4 +40,9 @@ public class PictureController {
     public Result<Void> updatePicture(@PathVariable Long id, String pictureName) {
         return pictureService.updatePicture(id, pictureName);
     }
+
+    @PostMapping("/setCoverPicture/{id}")
+    public Result<PictureVO> setCoverPicture(@PathVariable Long id) {
+        return pictureService.setCoverPicture(id);
+    }
 }

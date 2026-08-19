@@ -89,18 +89,43 @@
         }
         .top-gallery{
             height: 200px;
+            position: relative;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#888;
+            cursor:pointer;
+            overflow:hidden;
+            background-size: cover;
+            background-position: center;
+        }
+        .top-gallery .top-gallery-placeholder{
             display:flex;
             flex-direction:column;
             align-items:center;
             justify-content:center;
             gap:8px;
-            color:#888;
-            cursor:pointer;
         }
         .top-gallery .sub{
             font-size: 13px;
             color: #24967c;
         }
+        .top-gallery .top-gallery-hint{
+            display:none;
+            position:absolute;
+            left:0;
+            right:0;
+            bottom:0;
+            padding:10px 0;
+            text-align:center;
+            font-size:13px;
+            color:#fff;
+            background:rgba(0,0,0,0.35);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        .top-gallery.has-cover .top-gallery-placeholder{ display:none; }
+        .top-gallery.has-cover .top-gallery-hint{ display:block; }
         .greeting-card{
             text-align:center;
         }
@@ -148,6 +173,37 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
+        }
+        .latest-blog-box{
+            font-size:14px;
+            color:#888;
+        }
+        .latest-blog-box a{
+            display:block;
+            color:inherit;
+            text-decoration:none;
+        }
+        .latest-blog-title{
+            font-size:15px;
+            font-weight:600;
+            color:#1f2937;
+            margin-bottom:6px;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+        }
+        .latest-blog-desc{
+            font-size:13px;
+            color:#5a6b65;
+            display:-webkit-box;
+            -webkit-line-clamp:2;
+            -webkit-box-orient:vertical;
+            overflow:hidden;
+            margin-bottom:8px;
+        }
+        .latest-blog-meta{
+            font-size:12px;
+            color:#8aa09a;
         }
         /* ========== 右侧区域 ========== */
         .right-col{
@@ -204,6 +260,13 @@
         .play-button:hover{
             transform: scale(1.12);
         }
+        .music-name{
+            flex:1;
+            min-width:0;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+        }
         @media (max-width: 1000px) {
             .container{
                 grid-template-columns: 1fr;
@@ -229,24 +292,26 @@
         </div>
         <!-- 中间列 -->
         <div class="main-col">
-            <a class="glass-card top-gallery" href="pictureFront.html" style="text-decoration:none;color:inherit">
-                <span style="font-size: 46px;">🖼️</span>
-                <span>照片卡片区域</span>
-                <span class="sub">点击进入照片墙 →</span>
+            <a class="glass-card top-gallery" href="pictureFront.html" id="topGallery" style="text-decoration:none;color:inherit">
+                <div class="top-gallery-placeholder">
+                    <span style="font-size: 46px;">🖼️</span>
+                    <span>照片卡片区域</span>
+                    <span class="sub">点击进入照片墙 →</span>
+                </div>
+                <div class="top-gallery-hint">点击进入照片墙 →</div>
             </a>
             <div class="glass-card greeting-card">
                 <div class="greeting-avatar">🐱</div>
                 <h2>Good Afternoon</h2>
                 <p>I'm benleung , Nice to meet you!</p>
                 <div class="social-row">
-                    <a class="social-btn" href="https://github.com/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">Github</a>
+                    <a class="social-btn" href="https://github.com/hugeben57" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">Github</a>
                 </div>
             </div>
             <div class="bottom-row-middle">
                 <div class="glass-card">
                     <div style="font-size: 14px; color:#777; margin-bottom: 10px;">最新文章</div>
-                    <div>暂无</div>
-                    <div style="font-size: 13px; color:#888; margin-top: 6px;">2026/7/28</div>
+                    <div id="latestBlogBox" class="latest-blog-box">暂无</div>
                 </div>
                 <div class="glass-card">
                     <div style="font-size: 14px; color:#777; margin-bottom: 10px;">随机推荐</div>
@@ -271,12 +336,13 @@
                 <div class="calendar-week" id="calendar-body"></div>
             </div>
             <div class="glass-card music-card">
-                <span>🎵 Close To You</span>
-                <div class="play-button">▶</div>
+                <span id="musicName" class="music-name">🎵 暂无音乐</span>
+                <div class="play-button" id="playBtn" onclick="toggleMusic()">▶</div>
             </div>
         </div>
     </div>
-    <script src="js/api.js"></script>
+    <audio id="musicAudio" preload="metadata"></audio>
+    <script src="js/api.js?v=4"></script>
     <script>
         // 根据登录状态渲染侧边栏的登录/注册/管理按钮
         function renderSidebarAuth() {
@@ -323,6 +389,74 @@
             document.getElementById('calendar-body').innerHTML = cells;
         }
         renderCalendar();
+
+        // 照片墙封面：复用 getPictures 接口，优先取 isCover 的图片，无封面时回退到最新一张
+        async function loadGalleryCover() {
+            const gallery = document.getElementById('topGallery');
+            if (!gallery) return;
+            try {
+                const list = await API.getPictures();
+                if (!list || !list.length) return;
+                const cover = list.find(p => p.isCover) || list[list.length - 1];
+                if (!cover || !cover.url) return;
+                gallery.style.backgroundImage = "url('" + cover.url + "')";
+                gallery.classList.add('has-cover');
+            } catch (e) { /* 加载失败时保留占位提示 */ }
+        }
+        loadGalleryCover();
+
+        // 最新文章：先拿最新发布文章 id，再取详情，展示标题 + 概要
+        async function loadLatestBlog() {
+            const box = document.getElementById('latestBlogBox');
+            if (!box) return;
+            try {
+                const id = await API.getLatestBlogId();
+                if (!id) { box.innerHTML = '暂无'; return; }
+                const a = await API.getBlogById(id);
+                if (!a || !a.title) { box.innerHTML = '暂无'; return; }
+                const time = formatTime(a.publishedTime || a.createTime);
+                box.innerHTML =
+                    '<a href="article.html?id=' + encodeURIComponent(a.id) + '">' +
+                        '<div class="latest-blog-title">' + escapeHtml(a.title) + '</div>' +
+                        (a.description ? '<div class="latest-blog-desc">' + escapeHtml(a.description) + '</div>' : '') +
+                        '<div class="latest-blog-meta">' + escapeHtml(time) + '</div>' +
+                    '</a>';
+            } catch (e) {
+                box.innerHTML = '暂无';
+            }
+        }
+        loadLatestBlog();
+
+        // 音乐播放器：只播放一首，加载 /music/get 的单曲
+        const musicAudio = document.getElementById('musicAudio');
+        const musicNameEl = document.getElementById('musicName');
+        const playBtn = document.getElementById('playBtn');
+
+        async function loadMusic() {
+            try {
+                const m = await API.getMusic();
+                if (!m || !m.url) { musicNameEl.textContent = '🎵 暂无音乐'; return; }
+                musicNameEl.textContent = '🎵 ' + (m.musicName || '未知歌曲');
+                musicAudio.src = m.url;
+            } catch (e) {
+                musicNameEl.textContent = '🎵 暂无音乐';
+            }
+        }
+
+        function toggleMusic() {
+            if (!musicAudio.src) { toast('暂无可播放的音乐'); return; }
+            if (musicAudio.paused) {
+                musicAudio.play()
+                    .then(() => { playBtn.textContent = '⏸'; })
+                    .catch(() => { toast('播放失败'); });
+            } else {
+                musicAudio.pause();
+                playBtn.textContent = '▶';
+            }
+        }
+
+        musicAudio.addEventListener('ended', () => { playBtn.textContent = '▶'; });
+        loadMusic();
     </script>
 </body>
 </html>

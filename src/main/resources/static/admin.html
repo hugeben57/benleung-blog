@@ -33,6 +33,30 @@
         <tr><td colspan="7" class="empty">加载中...</td></tr>
       </tbody>
     </table>
+
+    <div class="admin-toolbar" style="margin-top:32px;">
+      <h2>音乐管理</h2>
+    </div>
+
+    <div class="glass-card" style="max-width:560px;">
+      <div class="form-group">
+        <label>当前音乐</label>
+        <div id="musicCurrent" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <span class="empty">加载中...</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>选择音频文件</label>
+        <input type="file" id="musicFile" accept="audio/*">
+      </div>
+      <div class="form-group">
+        <label>音乐名称</label>
+        <input id="musicNameInput" type="text" placeholder="歌曲名">
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" onclick="saveMusic()">保存音乐</button>
+      </div>
+    </div>
   </div>
 
   <!-- 新增/编辑弹窗 -->
@@ -65,7 +89,7 @@
     </div>
   </div>
 
-  <script src="js/api.js"></script>
+  <script src="js/api.js?v=4"></script>
   <script>
     // 守卫：仅管理员可进入。本地快检 + 服务端校验 token 是否过期
     async function initAdmin() {
@@ -76,6 +100,7 @@
       try {
         await API.getUserInfo();
         loadList();
+        loadMusicAdmin();
       } catch (e) {
         if (e && e.status === 401) {
           clearAuth();
@@ -187,6 +212,55 @@
         loadList();
       } catch (e) {
         handleError(e);
+      }
+    }
+
+    // ========== 音乐管理（单曲）==========
+    async function loadMusicAdmin() {
+      const box = document.getElementById('musicCurrent');
+      const nameInput = document.getElementById('musicNameInput');
+      try {
+        const m = await API.getMusic();
+        if (!m || !m.url) {
+          box.innerHTML = '<span class="empty">暂无音乐</span>';
+          nameInput.value = '';
+          return;
+        }
+        box.innerHTML =
+          '<span>' + escapeHtml(m.musicName || '未知歌曲') + '</span>' +
+          '<audio controls src="' + escapeHtml(m.url) + '" style="height:40px;max-width:260px;"></audio>';
+        nameInput.value = m.musicName || '';
+      } catch (e) {
+        // 后端无歌曲时返回 fail，视为暂无音乐
+        box.innerHTML = '<span class="empty">暂无音乐</span>';
+        nameInput.value = '';
+      }
+    }
+
+    async function saveMusic() {
+      const file = document.getElementById('musicFile').files[0];
+      if (!file) { toast('请选择音频文件'); return; }
+      const name = document.getElementById('musicNameInput').value.trim();
+      if (!name) { toast('请输入音乐名称'); return; }
+      toast('正在上传...');
+      try {
+        // 已有音乐则替换（update 固定 id=1），无音乐则新增
+        let hasExisting = false;
+        try {
+          const existing = await API.getMusic();
+          hasExisting = !!(existing && existing.id);
+        } catch (e) { hasExisting = false; }
+        if (hasExisting) {
+          await API.updateMusic(file, name);
+          toast('已替换音乐');
+        } else {
+          await API.addMusic(file, name);
+          toast('已添加音乐');
+        }
+        document.getElementById('musicFile').value = '';
+        loadMusicAdmin();
+      } catch (err) {
+        handleError(err);
       }
     }
 

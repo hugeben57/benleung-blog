@@ -13,4 +13,5 @@ public class PictureVO {
 
     private String pictureName;
 
+    private Boolean isCover;
 }

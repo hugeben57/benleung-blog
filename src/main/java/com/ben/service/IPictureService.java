@@ -19,4 +19,6 @@ public interface IPictureService {
 
     Result<Void> updatePicture(Long id, String pictureName);
 
+    Result<PictureVO> setCoverPicture(Long id);
+
 }

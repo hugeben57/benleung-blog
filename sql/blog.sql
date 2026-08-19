@@ -25,6 +25,14 @@ create table if not exists picture(
     picture_name varchar(100) not null
 );
 
+alter table picture add column is_cover tinyint not null default 0;
+
+
+create table if not exists music(
+    id int primary key auto_increment,
+    url varchar(255) not null,
+    music_name varchar(50) not null
+);
 -- 若旧表已存在（缺少 picture_name 列），仅执行一次：
 -- alter table picture add column picture_name varchar(100) not null;
 

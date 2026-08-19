@@ -184,4 +184,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         return Result.success(blogVOList);
     }
 
+    @Override
+    public Long getLatestBlogId() {
+        return blogMapper.getLatestBlogId();
+    }
 }

@@ -31,4 +31,5 @@ public interface IBlogService {
 
     Result<List<BlogVO>> getBlogPage(Long currentPage,Long pageSize);
 
+    Long getLatestBlogId();
 }

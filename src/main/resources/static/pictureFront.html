@@ -62,6 +62,10 @@
             height: auto;
             display: block;
             border-radius: 5px;
+            -webkit-user-drag: none;
+            user-drag: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         .photo-item .photo-name {
             font-size: 12px;
@@ -94,6 +98,20 @@
         }
         .photo-item:hover .del-btn {
             display: flex;
+        }
+
+        /* 封面角标 */
+        .photo-item .cover-badge {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            background: #40c9a2;
+            color: #fff;
+            font-size: 11px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            line-height: 1.4;
+            box-shadow: 0 2px 8px rgba(64, 201, 162, 0.45);
         }
 
         /* 空状态 */
@@ -147,6 +165,8 @@
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
             cursor: zoom-out;
+            user-select: none;
+            -webkit-user-select: none;
         }
         .lightbox.show { display: flex; }
         .lightbox img {
@@ -156,6 +176,8 @@
             background: #fff;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
             cursor: default;
+            user-select: none;
+            -webkit-user-select: none;
         }
         .lightbox-caption {
             display: flex;
@@ -211,6 +233,7 @@
     <div class="lightbox-caption">
         <span id="lightboxName"></span>
         <button class="btn btn-primary" id="renameBtn" onclick="openRenameModal()" style="display:none">重命名</button>
+        <button class="btn" id="setCoverBtn" onclick="setAsCover()" style="display:none">设为封面</button>
     </div>
 </div>
 
@@ -229,7 +252,7 @@
     </div>
 </div>
 
-<script src="js/api.js"></script>
+<script src="js/api.js?v=4"></script>
 <script>
     const board = document.getElementById('board');
     const isAdmin = !!getToken() && getRole() === 1;
@@ -258,11 +281,12 @@
             ? '<button class="del-btn" title="删除" onclick="removePhoto(' + pic.id + ', this.parentElement)">×</button>'
             : '';
         el.innerHTML = del +
-            '<img src="' + escapeHtml(pic.url) + '" alt="' + escapeHtml(name) + '" onerror="this.closest(\'.photo-item\').style.display=\'none\'">' +
-            '<div class="photo-name">' + escapeHtml(name) + '</div>';
-        el.addEventListener('click', (e) => {
-            if (dragged) { dragged = false; return; }
+            '<img src="' + escapeHtml(pic.url) + '" alt="' + escapeHtml(name) + '" draggable="false" onerror="this.closest(\'.photo-item\').style.display=\'none\'">' +
+            '<div class="photo-name">' + escapeHtml(name) + '</div>' +
+            (pic.isCover ? '<span class="cover-badge">封面</span>' : '');
+        el.addEventListener('dblclick', (e) => {
             if (e.target.closest('.del-btn')) return;
+            e.preventDefault(); // 阻止双击默认选中高亮
             openLightbox(pic, el);
         });
         board.appendChild(el);
@@ -367,7 +391,35 @@
         document.getElementById('lightboxImg').src = pic.url;
         document.getElementById('lightboxName').textContent = pic.pictureName || '';
         document.getElementById('renameBtn').style.display = isAdmin ? '' : 'none';
+        const coverBtn = document.getElementById('setCoverBtn');
+        coverBtn.style.display = isAdmin ? '' : 'none';
+        coverBtn.textContent = pic.isCover ? '已设为封面' : '设为封面';
+        coverBtn.disabled = !!pic.isCover;
         document.getElementById('lightbox').classList.add('show');
+        // 清掉双击产生的选中，避免图片带蓝色高亮
+        if (window.getSelection) window.getSelection().removeAllRanges();
+    }
+
+    async function setAsCover() {
+        if (!currentPic) return;
+        try {
+            await API.setCoverPicture(currentPic.id);
+            currentPic.isCover = true;
+            // 移除其它卡片上的封面角标，给当前卡片加上
+            document.querySelectorAll('#board .cover-badge').forEach(b => b.remove());
+            if (currentEl && !currentEl.querySelector('.cover-badge')) {
+                const badge = document.createElement('span');
+                badge.className = 'cover-badge';
+                badge.textContent = '封面';
+                currentEl.appendChild(badge);
+            }
+            const coverBtn = document.getElementById('setCoverBtn');
+            coverBtn.textContent = '已设为封面';
+            coverBtn.disabled = true;
+            toast('已设为封面');
+        } catch (err) {
+            toast(err.message || '设置失败');
+        }
     }
     function closeLightbox() {
         document.getElementById('lightbox').classList.remove('show');
@@ -411,35 +463,35 @@
         }
     });
 
-    // ========== 拖拽（照片置顶、跟随鼠标）==========
+    // ========== 拖拽（长按触发，按住拖起，松手放下）==========
     let dragTarget = null;
     let offsetX = 0, offsetY = 0;
-    let downX = 0, downY = 0;
-    let dragged = false;
+    let longPressTimer = null;
 
     board.addEventListener('mousedown', (e) => {
         // 点删除按钮或工具条时不触发拖拽
         if (e.target.closest('.del-btn') || e.target.closest('button') || e.target.closest('.wall-toolbar')) return;
         const item = e.target.closest('.photo-item');
         if (!item) return;
-        dragTarget = item;
-        dragged = false;
-        downX = e.clientX;
-        downY = e.clientY;
-        dragTarget.style.zIndex = 999;
-        const rect = dragTarget.getBoundingClientRect();
+        const rect = item.getBoundingClientRect();
         offsetX = e.clientX - rect.left;
         offsetY = e.clientY - rect.top;
+        // 长按 250ms 后才把照片"粘"到鼠标上开始拖拽
+        longPressTimer = setTimeout(() => {
+            dragTarget = item;
+            dragTarget.style.zIndex = 999;
+        }, 250);
     });
 
     document.addEventListener('mousemove', (e) => {
         if (!dragTarget) return;
-        if (!dragged && (Math.abs(e.clientX - downX) > 4 || Math.abs(e.clientY - downY) > 4)) dragged = true;
         dragTarget.style.left = (e.clientX - offsetX) + 'px';
         dragTarget.style.top = (e.clientY - offsetY) + 'px';
     });
 
     document.addEventListener('mouseup', () => {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
         if (dragTarget) {
             dragTarget.style.zIndex = 10;
             dragTarget = null;

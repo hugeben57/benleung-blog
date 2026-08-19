@@ -3,7 +3,7 @@
 const API = {
   // 基础请求：自动带 token、JSON 解析、非 2xx 抛带状态码的错误
   // formData=true 时按 multipart 上传（不手动设置 Content-Type，让浏览器带上 boundary）
-  async request(url, { method = 'GET', body, auth = false, formData = false } = {}) {
+  async request(url, { method = 'GET', body, auth = false, formData = false, raw = false } = {}) {
     const headers = {};
     if (auth) {
       const token = getToken();
@@ -40,6 +40,8 @@ const API = {
     }
 
     const data = await res.json();
+    // raw 模式：接口直接返回裸数据（非 Result 包装），跳过 code 校验
+    if (raw) return data;
     if (data.code !== 200) {
       throw { status: data.code, message: data.message || '操作失败' };
     }
@@ -61,6 +63,9 @@ const API = {
   // ---- 博客（公开）----
   getBlogById(id) {
     return this.request('/blog/getBlogById/' + id);
+  },
+  getLatestBlogId() {
+    return this.request('/blog/getLatestBlogId', { raw: true });
   },
   getBlogTypes() {
     return this.request('/blog/getBlogTypes');
@@ -104,6 +109,26 @@ const API = {
   },
   updatePicture(id, pictureName) {
     return this.request('/Picture/updatePicture/' + id + '?pictureName=' + encodeURIComponent(pictureName || ''), { method: 'POST', auth: true });
+  },
+  setCoverPicture(id) {
+    return this.request('/Picture/setCoverPicture/' + id, { method: 'POST', auth: true });
+  },
+
+  // ---- 音乐（单曲播放器）----
+  getMusic() {
+    return this.request('/music/get');
+  },
+  addMusic(file, musicName) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('musicName', musicName || '');
+    return this.request('/music/add', { method: 'POST', body: formData, formData: true, auth: true });
+  },
+  updateMusic(file, musicName) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('musicName', musicName || '');
+    return this.request('/music/update', { method: 'POST', body: formData, formData: true, auth: true });
   },
 };
 

@@ -1,5 +1,6 @@
 package com.ben.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ben.mapper.PictureMapper;
 import com.ben.model.entity.Picture;
@@ -10,6 +11,7 @@ import com.ben.service.IPictureService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -80,5 +82,18 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         picture.setPictureName(pictureName);
         updateById(picture);
         return Result.success();
+    }
+
+    @Override
+    public Result<PictureVO> setCoverPicture(Long id) {
+        LambdaUpdateWrapper<Picture> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.set(Picture::getIsCover, false).eq(Picture::getIsCover,true);
+        update(updateWrapper);
+        LambdaUpdateWrapper<Picture> updateWrapper2 = new LambdaUpdateWrapper<>();
+        updateWrapper2.set(Picture::getIsCover, true).eq(Picture::getId, id);
+        if (update(updateWrapper2)){
+            return Result.success(getPictureById(id).getData());
+        }
+        return Result.fail("设置失败");
     }
 }
