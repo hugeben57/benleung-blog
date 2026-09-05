@@ -45,3 +45,6 @@ build/
 ### Docker 部署 ###
 .env
 app.jar
+app.log
+app.pid
+nohup.out
