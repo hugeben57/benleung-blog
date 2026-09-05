@@ -4,16 +4,16 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/benblog?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
-    username: root
-    password: 13579@Lym
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:benblog}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:13579@Lym}
 
   data:
     redis:
-      database: 1
-      host: 127.0.0.1
-      port: 6379
-      password: 123456
+      database: ${REDIS_DATABASE:1}
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:123456}
 
   servlet:
     multipart:
@@ -30,9 +30,9 @@ mybatis-plus:
 
 
 minio:
-  endpoint: http://127.0.0.1:9000  # 修改你的 MinIO 端点
-  accessKey: minioadmin # 修改你的 MinIO Access Key
-  secretKey: minioadmin # 修改你的 MinIO Secret Key
-  bucket: ben-blog-data # 确认 Bucket 名称与你创建的一致
+  endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
+  accessKey: ${MINIO_ACCESS_KEY:minioadmin}
+  secretKey: ${MINIO_SECRET_KEY:minioadmin}
+  bucket: ${MINIO_BUCKET:ben-blog-data}
 
 
