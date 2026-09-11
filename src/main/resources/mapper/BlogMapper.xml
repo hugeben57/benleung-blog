@@ -10,4 +10,8 @@
     <select id="getLatestBlogId" resultType="Long">
         select id from blog order by published_time desc limit 1;
     </select>
+
+    <select id="getRandomBlog" resultType="com.ben.model.vo.BlogVO">
+        select * from blog where published = 1 order by rand() limit 1;
+    </select>
 </mapper>

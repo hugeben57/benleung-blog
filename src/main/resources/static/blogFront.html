@@ -99,17 +99,6 @@
             background-size: cover;
             background-position: center;
         }
-        .top-gallery .top-gallery-placeholder{
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            gap:8px;
-        }
-        .top-gallery .sub{
-            font-size: 13px;
-            color: #24967c;
-        }
         .top-gallery .top-gallery-hint{
             display:none;
             position:absolute;
@@ -124,7 +113,6 @@
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
         }
-        .top-gallery.has-cover .top-gallery-placeholder{ display:none; }
         .top-gallery.has-cover .top-gallery-hint{ display:block; }
         .greeting-card{
             text-align:center;
@@ -292,12 +280,7 @@
         </div>
         <!-- 中间列 -->
         <div class="main-col">
-            <a class="glass-card top-gallery" href="pictureFront.html" id="topGallery" style="text-decoration:none;color:inherit">
-                <div class="top-gallery-placeholder">
-                    <span style="font-size: 46px;">🖼️</span>
-                    <span>照片卡片区域</span>
-                    <span class="sub">点击进入照片墙 →</span>
-                </div>
+            <a class="glass-card top-gallery has-cover" href="pictureFront.html" id="topGallery" style="text-decoration:none;color:inherit;background-image:url('img/gallery-cover.png')">
                 <div class="top-gallery-hint">点击进入照片墙 →</div>
             </a>
             <div class="glass-card greeting-card">
@@ -315,7 +298,7 @@
                 </div>
                 <div class="glass-card">
                     <div style="font-size: 14px; color:#777; margin-bottom: 10px;">随机推荐</div>
-                    <div>暂无</div>
+                    <div id="randomBlogBox" class="latest-blog-box">暂无</div>
                 </div>
             </div>
         </div>
@@ -342,7 +325,7 @@
         </div>
     </div>
     <audio id="musicAudio" preload="metadata" loop></audio>
-    <script src="js/api.js?v=4"></script>
+    <script src="js/api.js?v=5"></script>
     <script>
         // 根据登录状态渲染侧边栏的登录/注册/管理按钮
         function renderSidebarAuth() {
@@ -390,21 +373,6 @@
         }
         renderCalendar();
 
-        // 照片墙封面：复用 getPictures 接口，优先取 isCover 的图片，无封面时回退到最新一张
-        async function loadGalleryCover() {
-            const gallery = document.getElementById('topGallery');
-            if (!gallery) return;
-            try {
-                const list = await API.getPictures();
-                if (!list || !list.length) return;
-                const cover = list.find(p => p.isCover) || list[list.length - 1];
-                if (!cover || !cover.url) return;
-                gallery.style.backgroundImage = "url('" + cover.url + "')";
-                gallery.classList.add('has-cover');
-            } catch (e) { /* 加载失败时保留占位提示 */ }
-        }
-        loadGalleryCover();
-
         // 最新文章：先拿最新发布文章 id，再取详情，展示标题 + 概要
         async function loadLatestBlog() {
             const box = document.getElementById('latestBlogBox');
@@ -426,6 +394,25 @@
             }
         }
         loadLatestBlog();
+
+        // 随机推荐：从已发布文章中随机取一篇，展示标题 + 概要，点击进入文章详情
+        async function loadRandomBlog() {
+            const box = document.getElementById('randomBlogBox');
+            if (!box) return;
+            try {
+                const a = await API.getRandomBlog();
+                if (!a || !a.title) { box.innerHTML = '暂无'; return; }
+                box.innerHTML =
+                    '<a href="article.html?id=' + encodeURIComponent(a.id) + '">' +
+                        '<div class="latest-blog-title">' + escapeHtml(a.title) + '</div>' +
+                        (a.description ? '<div class="latest-blog-desc">' + escapeHtml(a.description) + '</div>' : '') +
+                        (a.type ? '<div class="latest-blog-meta">' + escapeHtml(a.type) + '</div>' : '') +
+                    '</a>';
+            } catch (e) {
+                box.innerHTML = '暂无';
+            }
+        }
+        loadRandomBlog();
 
         // 音乐播放器：只播放一首，加载 /music/get 的单曲
         const musicAudio = document.getElementById('musicAudio');

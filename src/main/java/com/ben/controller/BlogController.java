@@ -73,4 +73,9 @@ public class BlogController {
         return blogService.getLatestBlogId();
     }
 
+    @GetMapping("/getRandomBlog")
+    public Result<BlogVO> getRandomBlog(){
+        return blogService.getRandomBlog();
+    }
+
 }

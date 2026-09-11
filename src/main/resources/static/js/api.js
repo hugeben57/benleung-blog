@@ -67,6 +67,9 @@ const API = {
   getLatestBlogId() {
     return this.request('/blog/getLatestBlogId', { raw: true });
   },
+  getRandomBlog() {
+    return this.request('/blog/getRandomBlog');
+  },
   getBlogTypes() {
     return this.request('/blog/getBlogTypes');
   },
@@ -110,10 +113,6 @@ const API = {
   updatePicture(id, pictureName) {
     return this.request('/Picture/updatePicture/' + id + '?pictureName=' + encodeURIComponent(pictureName || ''), { method: 'POST', auth: true });
   },
-  setCoverPicture(id) {
-    return this.request('/Picture/setCoverPicture/' + id, { method: 'POST', auth: true });
-  },
-
   // ---- 音乐（单曲播放器）----
   getMusic() {
     return this.request('/music/get');

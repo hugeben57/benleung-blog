@@ -18,6 +18,17 @@
   </header>
 
   <div class="container">
+    <!-- 音乐管理：置顶条形 -->
+    <div class="music-bar glass-card no-hover">
+      <span class="music-bar-title">音乐管理</span>
+      <div class="music-bar-current" id="musicCurrent">
+        <span class="empty">加载中...</span>
+      </div>
+      <input type="file" id="musicFile" accept="audio/*" class="music-bar-file">
+      <input id="musicNameInput" type="text" placeholder="歌曲名" class="music-bar-name">
+      <button type="button" class="btn btn-primary" onclick="saveMusic()">保存</button>
+    </div>
+
     <div class="admin-toolbar">
       <h2>文章管理</h2>
       <button class="btn btn-primary" onclick="openModal()">新增文章</button>
@@ -33,30 +44,6 @@
         <tr><td colspan="7" class="empty">加载中...</td></tr>
       </tbody>
     </table>
-
-    <div class="admin-toolbar" style="margin-top:32px;">
-      <h2>音乐管理</h2>
-    </div>
-
-    <div class="glass-card" style="max-width:560px;">
-      <div class="form-group">
-        <label>当前音乐</label>
-        <div id="musicCurrent" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-          <span class="empty">加载中...</span>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>选择音频文件</label>
-        <input type="file" id="musicFile" accept="audio/*">
-      </div>
-      <div class="form-group">
-        <label>音乐名称</label>
-        <input id="musicNameInput" type="text" placeholder="歌曲名">
-      </div>
-      <div class="form-actions">
-        <button type="button" class="btn btn-primary" onclick="saveMusic()">保存音乐</button>
-      </div>
-    </div>
   </div>
 
   <!-- 新增/编辑弹窗 -->
@@ -227,8 +214,8 @@
           return;
         }
         box.innerHTML =
-          '<span>' + escapeHtml(m.musicName || '未知歌曲') + '</span>' +
-          '<audio controls src="' + escapeHtml(m.url) + '" style="height:40px;max-width:260px;"></audio>';
+          '<span class="name">' + escapeHtml(m.musicName || '未知歌曲') + '</span>' +
+          '<audio controls src="' + escapeHtml(m.url) + '"></audio>';
         nameInput.value = m.musicName || '';
       } catch (e) {
         // 后端无歌曲时返回 fail，视为暂无音乐

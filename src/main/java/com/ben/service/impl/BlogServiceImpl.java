@@ -188,4 +188,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
     public Long getLatestBlogId() {
         return blogMapper.getLatestBlogId();
     }
+
+    @Override
+    public Result<BlogVO> getRandomBlog() {
+        return Result.success(blogMapper.getRandomBlog());
+    }
 }

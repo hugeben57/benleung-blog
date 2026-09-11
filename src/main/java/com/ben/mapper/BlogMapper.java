@@ -14,4 +14,6 @@ public interface BlogMapper extends BaseMapper<Blog> {
 
     Long getLatestBlogId();
 
+    BlogVO getRandomBlog();
+
 }

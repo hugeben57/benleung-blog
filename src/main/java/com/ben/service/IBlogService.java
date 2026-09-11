@@ -1,7 +1,6 @@
 package com.ben.service;
 
 import com.ben.model.dto.BlogDTO;
-import com.ben.model.entity.Blog;
 import com.ben.model.entity.Result;
 import com.ben.model.vo.BlogListVO;
 import com.ben.model.vo.BlogVO;
@@ -32,4 +31,6 @@ public interface IBlogService {
     Result<List<BlogVO>> getBlogPage(Long currentPage,Long pageSize);
 
     Long getLatestBlogId();
+
+    Result<BlogVO> getRandomBlog();
 }

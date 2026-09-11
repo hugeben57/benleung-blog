@@ -100,20 +100,6 @@
             display: flex;
         }
 
-        /* 封面角标 */
-        .photo-item .cover-badge {
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            background: #40c9a2;
-            color: #fff;
-            font-size: 11px;
-            padding: 3px 9px;
-            border-radius: 999px;
-            line-height: 1.4;
-            box-shadow: 0 2px 8px rgba(64, 201, 162, 0.45);
-        }
-
         /* 空状态 */
         .wall-empty {
             position: fixed;
@@ -233,7 +219,6 @@
     <div class="lightbox-caption">
         <span id="lightboxName"></span>
         <button class="btn btn-primary" id="renameBtn" onclick="openRenameModal()" style="display:none">重命名</button>
-        <button class="btn" id="setCoverBtn" onclick="setAsCover()" style="display:none">设为封面</button>
     </div>
 </div>
 
@@ -282,8 +267,7 @@
             : '';
         el.innerHTML = del +
             '<img src="' + escapeHtml(pic.url) + '" alt="' + escapeHtml(name) + '" draggable="false" onerror="this.closest(\'.photo-item\').style.display=\'none\'">' +
-            '<div class="photo-name">' + escapeHtml(name) + '</div>' +
-            (pic.isCover ? '<span class="cover-badge">封面</span>' : '');
+            '<div class="photo-name">' + escapeHtml(name) + '</div>';
         el.addEventListener('dblclick', (e) => {
             if (e.target.closest('.del-btn')) return;
             e.preventDefault(); // 阻止双击默认选中高亮
@@ -391,36 +375,11 @@
         document.getElementById('lightboxImg').src = pic.url;
         document.getElementById('lightboxName').textContent = pic.pictureName || '';
         document.getElementById('renameBtn').style.display = isAdmin ? '' : 'none';
-        const coverBtn = document.getElementById('setCoverBtn');
-        coverBtn.style.display = isAdmin ? '' : 'none';
-        coverBtn.textContent = pic.isCover ? '已设为封面' : '设为封面';
-        coverBtn.disabled = !!pic.isCover;
         document.getElementById('lightbox').classList.add('show');
         // 清掉双击产生的选中，避免图片带蓝色高亮
         if (window.getSelection) window.getSelection().removeAllRanges();
     }
 
-    async function setAsCover() {
-        if (!currentPic) return;
-        try {
-            await API.setCoverPicture(currentPic.id);
-            currentPic.isCover = true;
-            // 移除其它卡片上的封面角标，给当前卡片加上
-            document.querySelectorAll('#board .cover-badge').forEach(b => b.remove());
-            if (currentEl && !currentEl.querySelector('.cover-badge')) {
-                const badge = document.createElement('span');
-                badge.className = 'cover-badge';
-                badge.textContent = '封面';
-                currentEl.appendChild(badge);
-            }
-            const coverBtn = document.getElementById('setCoverBtn');
-            coverBtn.textContent = '已设为封面';
-            coverBtn.disabled = true;
-            toast('已设为封面');
-        } catch (err) {
-            toast(err.message || '设置失败');
-        }
-    }
     function closeLightbox() {
         document.getElementById('lightbox').classList.remove('show');
         currentPic = null;

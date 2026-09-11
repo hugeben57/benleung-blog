@@ -179,6 +179,39 @@ a { color: #1e8a70; text-decoration: none; }
 }
 .form-group textarea { min-height: 120px; resize: vertical; }
 
+/* 音乐管理置顶条形 */
+.music-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  border-radius: 16px;
+  margin-bottom: 4px;
+}
+.music-bar-title { font-size: 14px; font-weight: 600; color: #1f2937; white-space: nowrap; }
+.music-bar-current { display: flex; align-items: center; gap: 10px; flex: 1 1 220px; min-width: 0; }
+.music-bar-current .empty { padding: 0; text-align: left; font-size: 13px; }
+.music-bar-current .name {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 160px; font-size: 14px; color: #3d534c;
+}
+.music-bar-current audio { height: 30px; max-width: 220px; }
+.music-bar-file { flex: 0 0 auto; max-width: 190px; font-size: 13px; color: #5a6b65; }
+.music-bar-file::file-selector-button {
+  padding: 7px 14px; margin-right: 8px; border: none; border-radius: 12px;
+  cursor: pointer; font-family: inherit; font-size: 13px;
+  background: rgba(255, 255, 255, 0.6); color: #24967c;
+}
+.music-bar-file::file-selector-button:hover { background: rgba(255, 255, 255, 0.85); }
+.music-bar-name {
+  flex: 0 1 140px; min-width: 100px; padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 12px;
+  font-size: 13px; font-family: inherit; background: rgba(255, 255, 255, 0.55); color: #333;
+}
+.music-bar-name:focus { outline: none; border-color: #40c9a2; box-shadow: 0 0 0 3px rgba(64, 201, 162, 0.2); }
+.music-bar .btn { padding: 8px 16px; font-size: 13px; }
+
 /* 管理面板 */
 .admin-toolbar { display: flex; justify-content: space-between; align-items: center; margin: 24px 0; flex-wrap: wrap; gap: 12px; }
 .admin-toolbar h2 { font-size: 20px; color: #1f2937; }
