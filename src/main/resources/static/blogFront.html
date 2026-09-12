@@ -4,309 +4,269 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>benleung Dashboard</title>
-    <link rel="stylesheet" href="css/glass.css">
+    <link rel="stylesheet" href="css/glass.css?v=2">
     <style>
-        body{
-            padding: 30px;
-        }
-        .container{
+        body { padding: 30px; }
+
+        /* ========== 三列独立轨道 + 列顶部固定偏移 → 错落感 ==========
+           不用 grid-auto-rows 伪 masonry：卡片高度由异步数据决定，
+           row-span 方案需要 JS 重排，脆弱且会抖动。 */
+        .container {
             display: grid;
-            grid-template-columns: 240px 1fr 280px;
-            gap: 20px;
+            grid-template-columns: 264px minmax(0, 1fr) 300px;
+            gap: 22px;
+            align-items: start;   /* 关键：列不被拉伸，高度自然不齐 */
             max-width: 1500px;
             margin: 0 auto;
             padding: 0;
         }
-        /* ========== 左侧侧边栏 ========== */
-        .sidebar{
-            grid-row: span 2;
+        .col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+        .col-main { padding-top: 38px; }   /* 中列起点最低 */
+        .col-right { padding-top: 10px; }  /* 右列起点略低 */
+
+        /* ========== 左列 ========== */
+        .profile-top { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+        .avatar-small {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: linear-gradient(145deg, #fff8bc, #ffe9a8);
+            display: flex; align-items: center; justify-content: center; font-size: 22px;
+            box-shadow: inset 0 1px 0 #fff, 0 4px 10px -5px rgba(31, 138, 135, 0.5);
         }
-        .profile-top{
-            display:flex;
-            align-items:center;
-            gap:10px;
-            margin-bottom:20px;
-        }
-        .avatar-small{
-            width:40px;
-            height:40px;
-            border-radius:50%;
-            background:#fff;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:20px;
-        }
-        .sidebar-auth{
-            display:flex;
-            flex-direction:column;
-            gap:10px;
-            margin-bottom:18px;
-        }
-        .auth-btn{
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:8px;
-            padding:11px 12px;
-            border-radius:14px;
-            border:1px solid rgba(255,255,255,0.6);
-            background:rgba(255,255,255,0.5);
-            color:#24967c;
-            font-size:14px;
-            cursor:pointer;
-            text-decoration:none;
+        .profile-name { font-size: 16px; font-weight: 600; color: #1f2937; }
+        .dev-tag { font-size: 12px; color: #7c948d; }
+
+        .sidebar-auth { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .auth-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 11px 12px; border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.5); color: #24967c; font-size: 14px;
+            cursor: pointer; text-decoration: none;
             transition: transform 0.2s ease, background 0.2s ease;
         }
-        .auth-btn:hover{
-            transform: translateY(-3px);
-            background:rgba(255,255,255,0.75);
+        .auth-btn:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.75); }
+
+        .sidebar .section-label { display: block; margin-bottom: 10px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 10px; margin: 6px 0; border-radius: 16px;
+            color: #3d534c; font-size: 14px; text-decoration: none;
+            cursor: pointer; transition: 0.2s ease;
         }
-        .nav-item{
-            display:flex;
-            align-items:center;
-            gap:12px;
-            padding:12px 10px;
-            margin:8px 0;
-            border-radius:14px;
-            cursor:pointer;
-            transition:0.2s ease;
-            color:inherit;
-            text-decoration:none;
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.75);
+            box-shadow: inset 0 1px 0 #fff, 0 4px 10px -6px rgba(31, 138, 135, 0.4);
         }
-        .nav-item.active{
-            background:rgba(255,255,255,0.7);
+        .nav-item:not(.placeholder):hover { background: rgba(255, 255, 255, 0.6); transform: translateX(4px); }
+        .nav-item.placeholder { opacity: 0.72; cursor: default; }
+        .nav-item .icon-tile { width: 34px; height: 34px; flex-basis: 34px; font-size: 16px; }
+
+        .latest-row { display: flex; align-items: flex-start; gap: 12px; margin-top: 12px; }
+        .latest-thumb {
+            width: 52px; height: 52px; flex: 0 0 52px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 238, 222, 0.7));
+            box-shadow: inset 0 1px 0 #fff, 0 4px 10px -6px rgba(31, 138, 135, 0.45);
         }
-        .nav-item:hover{
-            background:rgba(255,255,255,0.6);
-            transform: translateX(4px);
+        .latest-blog-box { font-size: 14px; color: #8aa09a; min-width: 0; }
+        .latest-blog-box a { display: block; color: inherit; text-decoration: none; }
+        .latest-blog-title {
+            font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 4px;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
-        /* ========== 中间主区域 ========== */
-        .main-col{
-            display:flex;
-            flex-direction:column;
-            gap:20px;
+        .latest-blog-desc {
+            font-size: 12px; color: #5a6b65; margin-bottom: 6px;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
-        .top-gallery{
-            height: 200px;
-            position: relative;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:#888;
-            cursor:pointer;
-            overflow:hidden;
-            background-size: cover;
-            background-position: center;
+        .latest-blog-meta { font-size: 12px; color: #8aa09a; }
+
+        /* ========== 中列 ========== */
+        /* 拼贴卡：点阵纸底 + 三张倾斜贴纸。旋转只加在内部 .sticky 上，
+           绝不旋转 .glass-card 本身（全局 hover 上浮会覆盖掉 rotate）。 */
+        .collage-card {
+            position: relative; height: 216px; padding: 18px;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; margin-right: -8px;
+            text-decoration: none; color: inherit;
+            background:
+                radial-gradient(circle, rgba(255, 255, 255, 0.9) 1.5px, transparent 1.6px) 0 0 / 14px 14px,
+                linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(240, 244, 255, 0.42));
         }
-        .top-gallery .top-gallery-hint{
-            display:none;
-            position:absolute;
-            left:0;
-            right:0;
-            bottom:0;
-            padding:10px 0;
-            text-align:center;
-            font-size:13px;
-            color:#fff;
-            background:rgba(0,0,0,0.35);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+        .collage-stack { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+        .collage-stack .sticky { width: 120px; height: 120px; margin: 0 -20px; font-size: 42px; }
+        .collage-stack .s1 { transform: rotate(-8deg) translateY(6px); }
+        .collage-stack .s2 { transform: rotate(5deg); z-index: 2; background: linear-gradient(145deg, #fff, #ffe9f0); }
+        .collage-stack .s3 { transform: rotate(-3deg) translateY(-8px); background: linear-gradient(145deg, #fff, #e2f6ea); }
+        .top-gallery-hint {
+            display: none; position: absolute; left: 0; right: 0; bottom: 0;
+            padding: 10px 0; text-align: center; font-size: 13px; color: #fff;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
         }
-        .top-gallery.has-cover .top-gallery-hint{ display:block; }
-        .greeting-card{
-            text-align:center;
+        .collage-card:hover .top-gallery-hint { display: block; }
+
+        .greeting-card { text-align: center; margin: 0 26px 0 6px; }
+        .greeting-avatar {
+            width: 96px; height: 96px; border-radius: 50%;
+            background: linear-gradient(145deg, #fff8bc, #ffe9a8);
+            margin: 4px auto 16px;
+            display: flex; align-items: center; justify-content: center; font-size: 50px;
+            box-shadow: inset 0 1px 0 #fff, 0 10px 22px -10px rgba(31, 138, 135, 0.6);
         }
-        .greeting-avatar{
-            width:90px;
-            height:90px;
-            border-radius:50%;
-            background-color: #fff8bc;
-            margin: 0 auto 16px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size: 50px;
+        .greeting-card h2 { font-weight: 500; color: #3d534c; font-size: 22px; }
+        .greeting-card p { font-size: 20px; margin-top: 8px; color: #24967c; }
+
+        .social-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+        .social-btn {
+            flex: 0 0 auto; padding: 10px 16px 10px 12px; border-radius: 16px;
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            color: #3d534c; font-size: 14px; text-decoration: none; cursor: pointer;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 6px 14px -10px rgba(31, 138, 135, 0.5);
+            transition: transform 0.2s ease, background 0.2s ease;
         }
-        .greeting-card h2{
-            font-weight: 500;
-            color:#333;
+        .social-btn:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.75); }
+
+        .rec-card .section-label { display: block; margin-bottom: 12px; }
+        .rec-body { display: flex; align-items: flex-start; gap: 12px; }
+        .rec-icon {
+            width: 52px; height: 52px; flex: 0 0 52px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+            background: linear-gradient(145deg, #d9f4ff, #c6ecff);
+            box-shadow: inset 0 1px 0 #fff, 0 4px 10px -6px rgba(31, 138, 135, 0.45);
         }
-        .greeting-card p{
-            font-size:22px;
-            margin-top: 8px;
-            color:#24967c;
+        .rec-body .latest-blog-box { flex: 1; }
+
+        /* ========== 右列 ========== */
+        .col-right .pill-btn { align-self: flex-start; }
+        .clock-card { padding: 20px; }
+        .calendar-header { margin-bottom: 12px; color: #3d534c; font-size: 14px; }
+        .calendar-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px; }
+        .calendar-day { text-align: center; padding: 6px 0; border-radius: 8px; font-size: 13px; color: #5a6b65; }
+        .calendar-day.today {
+            background-color: var(--teal); color: #fff;
+            box-shadow: 0 4px 10px -4px rgba(64, 201, 162, 0.8);
         }
-        .social-row{
-            display:flex;
-            gap:12px;
-            margin-top: 24px;
-            justify-content:center;
-        }
-        .social-btn{
-            padding: 8px 16px;
-            border-radius: 12px;
-            background:rgba(255,255,255,0.55);
-            cursor:pointer;
-            display:flex;
-            align-items:center;
-            gap:6px;
-            transition: transform 0.2s ease,background 0.2s ease;
-        }
-        .social-btn:hover{
-            transform: translateY(-3px);
-            background:rgba(255,255,255,0.75);
-        }
-        .bottom-row-middle{
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        .latest-blog-box{
-            font-size:14px;
-            color:#888;
-        }
-        .latest-blog-box a{
-            display:block;
-            color:inherit;
-            text-decoration:none;
-        }
-        .latest-blog-title{
-            font-size:15px;
-            font-weight:600;
-            color:#1f2937;
-            margin-bottom:6px;
-            overflow:hidden;
-            text-overflow:ellipsis;
-            white-space:nowrap;
-        }
-        .latest-blog-desc{
-            font-size:13px;
-            color:#5a6b65;
-            display:-webkit-box;
-            -webkit-line-clamp:2;
-            -webkit-box-orient:vertical;
-            overflow:hidden;
-            margin-bottom:8px;
-        }
-        .latest-blog-meta{
-            font-size:12px;
-            color:#8aa09a;
-        }
-        /* ========== 右侧区域 ========== */
-        .right-col{
-            display:flex;
-            flex-direction:column;
-            gap: 20px;
-        }
-        .clock-card{
-            text-align:center;
-            font-size:64px;
-            color:#555;
-            font-weight: 300;
-        }
-        .calendar-card{
-        }
-        .calendar-header{
-            margin-bottom: 12px;
-            color:#555;
-        }
-        .calendar-week{
-            display:grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap:4px;
-            margin-bottom:8px;
-        }
-        .calendar-day{
-            text-align:center;
-            padding:6px 0;
-            border-radius: 8px;
-            font-size:14px;
-        }
-        .calendar-day.today{
-            background-color:#40c9a2;
-            color:white;
-        }
-        /* 音乐播放器 */
-        .music-card{
-            display:flex;
-            align-items:center;
-            gap: 12px;
-        }
-        .play-button{
-            width:40px;
-            height:40px;
-            border-radius: 50%;
-            background-color:#40c9a2;
-            color:white;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            cursor:pointer;
+        .music-card { display: flex; align-items: center; gap: 12px; }
+        .music-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+        .music-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: #3d534c; }
+        .play-button {
+            width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%;
+            background: linear-gradient(180deg, #4ad6ae, #2fb28c); color: #fff;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 8px 18px -8px rgba(47, 178, 140, 0.8);
             transition: transform 0.2s ease;
         }
-        .play-button:hover{
-            transform: scale(1.12);
-        }
-        .music-name{
-            flex:1;
-            min-width:0;
-            overflow:hidden;
-            text-overflow:ellipsis;
-            white-space:nowrap;
+        .play-button:hover { transform: scale(1.12); }
+
+        /* ========== 响应式（保持 glass.css 零断点的架构，断点只放这里） ========== */
+        @media (max-width: 1200px) {
+            .container { grid-template-columns: 244px minmax(0, 1fr); }
+            /* 右列改为横向自动换行的条带，而不是拉成很长的一列 */
+            .col-right { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; padding-top: 0; }
+            .col-right > * { flex: 1 1 250px; }
+            .col-right .calendar-card { flex: 1 1 320px; }
+            .col-right .fab { flex: 0 0 auto; }
+            .col-right .pill-btn { align-self: center; }
+            .col-main { padding-top: 20px; }
         }
         @media (max-width: 1000px) {
-            .container{
-                grid-template-columns: 1fr;
-            }
+            .container { grid-template-columns: 1fr; }
+            .col-main, .col-right { padding-top: 0; }
+            .collage-card { margin-right: 0; }
+            .greeting-card { margin: 0; }
+            .collage-stack .sticky { transform: none; }
+            .col-right .pill-btn { align-self: flex-start; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- 左侧导航栏 -->
-        <div class="glass-card sidebar">
-            <div class="profile-top">
-                <div class="avatar-small">🐱</div>
-                <div>
-                    <h3>benleung</h3>
-                    <span style="font-size: 12px; color:#777">(开发中)</span>
+        <!-- ========== 左列 ========== -->
+        <aside class="col col-left">
+            <div class="glass-card sidebar no-hover">
+                <div class="profile-top">
+                    <div class="avatar-small">🐱</div>
+                    <div>
+                        <div class="profile-name">benleung</div>
+                        <span class="dev-tag">(开发中)</span>
+                    </div>
                 </div>
+                <!-- 登录 / 注册 或 管理 / 退出（按登录状态渲染） -->
+                <div class="sidebar-auth" id="sidebarAuth"></div>
+                <div class="section-label">General</div>
+                <a class="nav-item active" href="index.html"><span class="icon-tile">📄</span>近期文章</a>
+                <!-- 以下为占位项：暂无对应页面，有页面后补 href -->
+                <span class="nav-item placeholder"><span class="icon-tile">🧩</span>我的项目</span>
+                <span class="nav-item placeholder"><span class="icon-tile">ℹ️</span>关于网站</span>
+                <span class="nav-item placeholder"><span class="icon-tile">⭐</span>推荐分享</span>
+                <span class="nav-item placeholder"><span class="icon-tile">🔗</span>优秀博客</span>
             </div>
-            <!-- 登录 / 注册 或 管理 / 退出（按登录状态渲染） -->
-            <div class="sidebar-auth" id="sidebarAuth"></div>
-            <div style="font-size: 13px; color:#777; margin-bottom:10px">GENERAL</div>
-            <a class="nav-item active" href="index.html">📄 近期文章</a>
-        </div>
-        <!-- 中间列 -->
-        <div class="main-col">
-            <a class="glass-card top-gallery has-cover" href="pictureFront.html" id="topGallery" style="text-decoration:none;color:inherit;background-image:url('img/gallery-cover.png')">
-                <div class="top-gallery-hint">点击进入照片墙 →</div>
-            </a>
-            <div class="glass-card greeting-card">
-                <div class="greeting-avatar">🐱</div>
-                <h2>Good Afternoon</h2>
-                <p>I'm benleung , Nice to meet you!</p>
-                <div class="social-row">
-                    <a class="social-btn" href="https://github.com/hugeben57" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">Github</a>
-                </div>
-            </div>
-            <div class="bottom-row-middle">
-                <div class="glass-card">
-                    <div style="font-size: 14px; color:#777; margin-bottom: 10px;">最新文章</div>
+
+            <div class="glass-card latest-card no-hover">
+                <div class="section-label">最新文章</div>
+                <div class="latest-row">
+                    <span class="latest-thumb">📝</span>
                     <div id="latestBlogBox" class="latest-blog-box">暂无</div>
                 </div>
-                <div class="glass-card">
-                    <div style="font-size: 14px; color:#777; margin-bottom: 10px;">随机推荐</div>
+            </div>
+        </aside>
+
+        <!-- ========== 中列 ========== -->
+        <main class="col col-main">
+            <a class="glass-card collage-card" href="pictureFront.html" id="topGallery">
+                <div class="collage-stack">
+                    <span class="sticky s1" style="background-image:url('img/gallery-cover.png')"></span>
+                    <span class="sticky s2">🐱</span>
+                    <span class="sticky s3">🌿</span>
+                </div>
+                <div class="top-gallery-hint">点击进入照片墙 →</div>
+            </a>
+
+            <div class="glass-card greeting-card no-hover">
+                <div class="greeting-avatar">🐱</div>
+                <h2 id="greetingText">Good Afternoon</h2>
+                <p>I'm benleung, Nice to meet you!</p>
+            </div>
+
+            <div class="social-row">
+                <a class="social-btn" href="https://github.com/hugeben57" target="_blank" rel="noopener">
+                    <span class="icon-tile" aria-hidden="true">
+                        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+                    </span>
+                    <span>Github</span>
+                </a>
+                <!-- TODO: 替换为真实邮箱地址 -->
+                <a class="social-btn" href="mailto:">
+                    <span class="icon-tile" aria-hidden="true">✉️</span>
+                    <span>Email</span>
+                </a>
+            </div>
+
+            <div class="glass-card rec-card no-hover">
+                <div class="section-label">随机推荐</div>
+                <div class="rec-body">
+                    <span class="rec-icon">🎲</span>
                     <div id="randomBlogBox" class="latest-blog-box">暂无</div>
                 </div>
             </div>
-        </div>
-        <!-- 右侧列 -->
-        <div class="right-col">
-            <div class="glass-card clock-card" id="clock">12:27</div>
-            <div class="glass-card calendar-card">
-                <div class="calendar-header" id="calendar-header">2026/8/18 周二</div>
+        </main>
+
+        <!-- ========== 右列 ========== -->
+        <aside class="col col-right">
+            <a class="pill-btn" id="writeBtn" href="login.html">✍ 写文章</a>
+
+            <div class="glass-card clock-card no-hover">
+                <div class="clock-digits" id="clock">
+                    <span class="digit">-</span><span class="digit">-</span>
+                    <span class="colon">:</span>
+                    <span class="digit">-</span><span class="digit">-</span>
+                </div>
+            </div>
+
+            <div class="glass-card calendar-card no-hover">
+                <div class="calendar-header" id="calendar-header">2026/1/1 周一</div>
                 <div class="calendar-week">
                     <div class="calendar-day">一</div>
                     <div class="calendar-day">二</div>
@@ -318,21 +278,30 @@
                 </div>
                 <div class="calendar-week" id="calendar-body"></div>
             </div>
-            <div class="glass-card music-card">
-                <span id="musicName" class="music-name">🎵 暂无音乐</span>
+
+            <div class="glass-card music-card no-hover">
+                <span class="icon-tile">🎵</span>
+                <div class="music-info">
+                    <span id="musicName" class="music-name">暂无音乐</span>
+                    <div class="progress-track"><div class="progress-fill" id="musicProgress"></div></div>
+                </div>
                 <div class="play-button" id="playBtn" onclick="toggleMusic()">▶</div>
             </div>
-        </div>
+
+            <button class="fab" title="返回顶部" onclick="scrollTo({top:0,behavior:'smooth'})">↑</button>
+        </aside>
     </div>
     <audio id="musicAudio" preload="metadata" loop></audio>
     <script src="js/api.js?v=5"></script>
     <script>
-        // 根据登录状态渲染侧边栏的登录/注册/管理按钮
+        // 登录状态渲染侧边栏按钮，并决定「写文章」按钮去向
         function renderSidebarAuth() {
             const box = document.getElementById('sidebarAuth');
-            if (!box) return;
+            const writeBtn = document.getElementById('writeBtn');
             const token = getToken();
             const role = getRole();
+            if (writeBtn) writeBtn.href = (token && role === 1) ? 'admin.html' : 'login.html';
+            if (!box) return;
             let html = '';
             if (token) {
                 if (role === 1) html += '<a class="auth-btn" href="admin.html">⚙️ 管理面板</a>';
@@ -344,12 +313,32 @@
         }
         renderSidebarAuth();
 
-        // 实时时钟
-        function updateClock(){
+        // 按时段问候
+        function greetingOf(h) {
+            if (h < 5) return 'Good Night';
+            if (h < 12) return 'Good Morning';
+            if (h < 18) return 'Good Afternoon';
+            return 'Good Evening';
+        }
+
+        // 实时时钟：定宽数字块 + tabular-nums，跨分钟不抖动；问候语随之更新
+        const clockEl = document.getElementById('clock');
+        const greetingEl = document.getElementById('greetingText');
+        let lastClockKey = '';
+        function updateClock() {
             const now = new Date();
-            let h = String(now.getHours()).padStart(2,'0');
-            let m = String(now.getMinutes()).padStart(2,'0');
-            document.getElementById("clock").innerText = `${h}:${m}`;
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const key = h + m;
+            if (key !== lastClockKey) {
+                lastClockKey = key;
+                clockEl.innerHTML =
+                    '<span class="digit">' + h[0] + '</span><span class="digit">' + h[1] + '</span>' +
+                    '<span class="colon">:</span>' +
+                    '<span class="digit">' + m[0] + '</span><span class="digit">' + m[1] + '</span>';
+                const g = greetingOf(now.getHours());
+                if (greetingEl && greetingEl.textContent !== g) greetingEl.textContent = g;
+            }
         }
         updateClock();
         setInterval(updateClock, 1000);
@@ -362,7 +351,7 @@
             const today = now.getDate();
             const firstDay = new Date(year, month, 1).getDay(); // 0=周日
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const weekDays = ['日','一','二','三','四','五','六'];
+            const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
             document.getElementById('calendar-header').textContent = `${year}/${month + 1}  ${weekDays[now.getDay()]}`;
             let cells = '';
             for (let i = 0; i < firstDay; i++) cells += '<div class="calendar-day"></div>';
@@ -395,7 +384,7 @@
         }
         loadLatestBlog();
 
-        // 随机推荐：从已发布文章中随机取一篇，展示标题 + 概要，点击进入文章详情
+        // 随机推荐：从已发布文章中随机取一篇，展示标题 + 概要 + 分类
         async function loadRandomBlog() {
             const box = document.getElementById('randomBlogBox');
             if (!box) return;
@@ -418,15 +407,16 @@
         const musicAudio = document.getElementById('musicAudio');
         const musicNameEl = document.getElementById('musicName');
         const playBtn = document.getElementById('playBtn');
+        const musicProgress = document.getElementById('musicProgress');
 
         async function loadMusic() {
             try {
                 const m = await API.getMusic();
-                if (!m || !m.url) { musicNameEl.textContent = '🎵 暂无音乐'; return; }
-                musicNameEl.textContent = '🎵 ' + (m.musicName || '未知歌曲');
+                if (!m || !m.url) { musicNameEl.textContent = '暂无音乐'; return; }
+                musicNameEl.textContent = m.musicName || '未知歌曲';
                 musicAudio.src = m.url;
             } catch (e) {
-                musicNameEl.textContent = '🎵 暂无音乐';
+                musicNameEl.textContent = '暂无音乐';
             }
         }
 
@@ -442,6 +432,12 @@
             }
         }
 
+        // 进度条跟随播放进度（duration 就绪前不写，避免 NaN）
+        musicAudio.addEventListener('timeupdate', () => {
+            const d = musicAudio.duration;
+            if (!musicProgress || !isFinite(d) || d <= 0) return;
+            musicProgress.style.width = (musicAudio.currentTime / d * 100) + '%';
+        });
         musicAudio.addEventListener('ended', () => { playBtn.textContent = '▶'; });
         loadMusic();
     </script>

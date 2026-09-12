@@ -1,9 +1,25 @@
 /* ===== 玻璃拟态共享样式（源自 blogFront.html） ===== */
+:root {
+  --radius-card: 26px;
+  --radius-tile: 14px;
+  --teal: #40c9a2;
+  --teal-deep: #2fb28c;
+  --glass-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 2px rgba(31, 138, 135, 0.05),
+    0 10px 24px -8px rgba(31, 138, 135, 0.14),
+    0 26px 48px -22px rgba(31, 138, 135, 0.2);
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: "Segoe UI", system-ui, sans-serif;
-  background: linear-gradient(135deg, #e8f6f0 0%, #f9f8d9 50%, #d4f2c8 100%);
+  background:
+    radial-gradient(60% 50% at 12% 6%, rgba(255, 255, 255, 0.85), transparent 62%),
+    radial-gradient(50% 45% at 88% 10%, rgba(255, 236, 170, 0.55), transparent 66%),
+    radial-gradient(55% 50% at 76% 94%, rgba(150, 230, 200, 0.5), transparent 62%),
+    linear-gradient(135deg, #e8f6f0 0%, #f9f8d9 50%, #d4f2c8 100%);
   background-attachment: fixed;
   min-height: 100vh;
   color: #333;
@@ -16,23 +32,26 @@ a { color: #1e8a70; text-decoration: none; }
 
 /* 玻璃卡片 */
 .glass-card {
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.34) 100%);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border-radius: var(--radius-card);
   padding: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 8px 32px rgba(31, 138, 135, 0.08);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.28s ease;
 }
 .glass-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 14px 40px rgba(31, 138, 135, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 18px 40px -12px rgba(31, 138, 135, 0.22),
+    0 34px 64px -26px rgba(31, 138, 135, 0.22);
 }
 /* 内容型卡片不希望在悬浮时上浮 */
 .glass-card.no-hover:hover {
   transform: none;
-  box-shadow: 0 8px 32px rgba(31, 138, 135, 0.08);
+  box-shadow: var(--glass-shadow);
 }
 
 /* 顶栏 */
@@ -64,16 +83,26 @@ a { color: #1e8a70; text-decoration: none; }
   border: none;
   border-radius: 14px;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   text-decoration: none;
   text-align: center;
   background: rgba(255, 255, 255, 0.55);
   color: #24967c;
-  transition: transform 0.2s ease, background 0.2s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 6px 14px -8px rgba(31, 138, 135, 0.38);
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
-.btn:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.75); }
-.btn-primary { background: #40c9a2; color: #fff; }
-.btn-primary:hover { background: #34b691; }
+.btn:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 10px 20px -8px rgba(31, 138, 135, 0.45);
+}
+.btn-primary { background: linear-gradient(180deg, #4ad6ae, #34b691); color: #fff; }
+.btn-primary:hover { background: linear-gradient(180deg, #45cfa7, #2ea984); }
 .btn-outline { background: transparent; color: #24967c; border: 1px solid rgba(36, 150, 124, 0.5); }
 .btn-outline:hover { background: rgba(255, 255, 255, 0.6); }
 .btn-danger { background: #e5484d; color: #fff; }
@@ -260,5 +289,94 @@ a { color: #1e8a70; text-decoration: none; }
   position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
   background: #1f2937; color: #fff; padding: 10px 20px; border-radius: 12px;
   font-size: 14px; opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 200;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 10px 24px -10px rgba(15, 40, 34, 0.6);
 }
 .toast.show { opacity: 1; }
+
+/* ===== Dashboard 组件 helper（blogFront.html 使用，其余页面不受影响） ===== */
+/* 图标柔和方块：导航项 / 社交按钮 / 卡片图标统一用它包一层 */
+.icon-tile {
+  width: 38px; height: 38px; flex: 0 0 38px;
+  border-radius: var(--radius-tile);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 18px; line-height: 1;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 4px 10px -6px rgba(31, 138, 135, 0.45);
+}
+.icon-tile svg { width: 20px; height: 20px; display: block; }
+
+/* 小号大写分区标题 */
+.section-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: #7c948d;
+}
+
+/* 胶囊按钮 */
+.pill-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px; border-radius: 999px; border: none;
+  cursor: pointer; text-decoration: none; color: #fff; font-size: 14px;
+  background: linear-gradient(180deg, #4ad6ae, #2fb28c);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 8px 18px -8px rgba(47, 178, 140, 0.7);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.pill-btn:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 12px 22px -8px rgba(47, 178, 140, 0.8);
+}
+
+/* 等宽数字时钟：定宽数字块避免秒数/分钟跳变时抖动 */
+.clock-digits {
+  display: flex; gap: 6px; justify-content: center; align-items: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600; font-size: 52px; letter-spacing: 0.04em; color: #3d534c;
+}
+.clock-digits .digit {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 0.8em; padding: 0.06em 0.1em; border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 -3px 6px rgba(31, 138, 135, 0.1),
+    inset 0 1px 0 #fff;
+}
+
+/* 进度条 */
+.progress-track {
+  height: 6px; border-radius: 999px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 2px 4px rgba(31, 138, 135, 0.14);
+}
+.progress-fill {
+  height: 100%; width: 0; border-radius: 999px;
+  background: var(--teal); transition: width 0.2s linear;
+}
+
+/* 圆形悬浮按钮 */
+.fab {
+  width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer;
+  align-self: flex-end;
+  background: linear-gradient(180deg, #4ad6ae, #2fb28c); color: #fff; font-size: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 10px 22px -10px rgba(47, 178, 140, 0.8);
+  transition: transform 0.2s ease;
+}
+.fab:hover { transform: translateY(-3px); }
+
+/* 贴纸 / 照片瓦片 */
+.sticky {
+  width: 96px; height: 96px; border-radius: 18px;
+  background-size: cover; background-position: center;
+  display: flex; align-items: center; justify-content: center; font-size: 34px;
+  box-shadow:
+    0 8px 18px -8px rgba(31, 138, 135, 0.5),
+    inset 0 0 0 4px rgba(255, 255, 255, 0.85);
+}
